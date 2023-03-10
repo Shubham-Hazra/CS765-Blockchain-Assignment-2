@@ -64,8 +64,8 @@ class Network:
                 self.G.clear()
         
         # Add the adversary
-        self.G.add_node(0)
         adversary_edges = random.sample(list(self.G.nodes),int(self.zeta*self.num_nodes/100.0))
+        self.G.add_node(0)
         # Add edge between 0th node (adversary) and the rest zeta*num_nodes/100 nodes selected randomly
         for node in adversary_edges:
             self.G.add_edge(0,node)
