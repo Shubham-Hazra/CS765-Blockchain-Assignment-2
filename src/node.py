@@ -13,7 +13,7 @@ from block import *
 
 
 class Node:
-    def __init__(self, pid, attrb, num_nodes):
+    def __init__(self, pid, attrb, num_nodes, isAdversary):
 
         self.pid = pid  # Unique Id of the peer
         self.cpu = attrb['cpu']  # CPU speed of the peer
@@ -31,7 +31,20 @@ class Node:
         self.block_buffer = set()  # List of blocks that the peer has heard but not added to its blockchain because parent block is not yet added
         #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.blocksReceiveTime = []
-
+        #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        self.private_blockchain = []
+        self.private_blockchain_tree = {}
+        self.isAdversary = isAdversary # IsAdvsersary = 1 means selfish mining and isAdversary = 2 is stubborn  mining
+######################################################################################################################################################
+    # Functions for the adversary
+    def add_to_private_blockchain(self, simulator, block):
+        self.private_blockchain.append(block)
+        self.private_blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.curr_time}
+    
+    def release_from_private_chain(self):
+        block_to_remove = self.private_blockchain.pop(0)
+        del self.private_blockchain_tree[block_to_remove.block_id]
+        return block_to_remove
 ######################################################################################################################################################
     # The following functions will be used to add the block that the node has heard, to its blockchain and remove common TXNs from its TXN pool
      
