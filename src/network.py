@@ -35,8 +35,6 @@ class Network:
 
             sequence = [random.randint(4,8) for i in range(1,self.num_nodes)] # Each node has 4 to 8 peers
 
-            print("hello")
-            print(sequence)
             # Randomly generate a valid degree sequence
             while not nx.is_graphical(sequence, "hh"): # Check if the given degree sequence is valid 
                 sequence = [random.randint(4,8) for i in range(1,self.num_nodes)]
@@ -64,7 +62,7 @@ class Network:
                 self.G.clear()
         
         # Add the adversary
-        adversary_edges = random.sample(list(self.G.nodes),int(self.zeta*self.num_nodes/100.0))
+        adversary_edges = random.sample(list(self.G.nodes),int(self.zeta*(self.num_nodes-1)/100.0))
         self.G.add_node(0)
         # Add edge between 0th node (adversary) and the rest zeta*num_nodes/100 nodes selected randomly
         for node in adversary_edges:
@@ -72,10 +70,10 @@ class Network:
 
         # Converts Graph to dictionary of lists
         self.adj = nx.to_dict_of_lists(self.G, nodelist=None)
-        print(self.adj)
+        print("Adjacency list", self.adj)
 
         # Print the degree sequence
-        print(sequence)
+        print("Degree Sequence", [len(sequence)
 
     # VERIFIED
     def show_graph(self):
@@ -148,7 +146,7 @@ class Network:
                 self.attrb[i]['hashing_power'] = hashing_power*10
 
 # Testing the class
-N = Network(15,60,10,10,600)
+N = Network(20,100,10,10,600)
 print("CPU power of first node" , N.G.nodes[0]['cpu'])
 N.show_graph()
 for edge in N.G.edges:
