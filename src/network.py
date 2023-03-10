@@ -8,8 +8,9 @@ from node import Node
 
 
 class Network:
-    def __init__(self, num_nodes,z0,z1,I):
+    def __init__(self, num_nodes,zeta,z0,z1,I):
         self.num_nodes = num_nodes; # Number of nodes in theconnected graph
+        self.zeta = zeta # sets the percentage of nodes to which the adversary is connected to
         self.G = nx.Graph() # Stores the graph of the network
         self.adj = {} # Stores the dictionary of lists for storing the graph of the network
         self.create_graph() # create the P2P Network
@@ -30,34 +31,44 @@ class Network:
 
         # Repeat while the graph is connected
         while True:
-            self.G.add_nodes_from([i for i in range(self.num_nodes)])
+            self.G.add_nodes_from([i for i in range(1,self.num_nodes)])
 
-            sequence = [random.randint(4,8) for i in range(self.num_nodes)] # Each node has 4 to 8 peers
+            sequence = [random.randint(4,8) for i in range(1,self.num_nodes)] # Each node has 4 to 8 peers
+
+            print("hello")
+            print(sequence)
             # Randomly generate a valid degree sequence
             while not nx.is_graphical(sequence, "hh"): # Check if the given degree sequence is valid 
-                sequence = [random.randint(4,8) for i in range(self.num_nodes)]
+                sequence = [random.randint(4,8) for i in range(1,self.num_nodes)]
 
             # Sort the degree sequence
             sequence.sort()
-            curr_deg = [0 for i in range(self.num_nodes)] # Maintains the current degree of all the nodes
+            curr_deg = [0 for i in range(1,self.num_nodes)] # Maintains the current degree of all the nodes
 
             # Connects the nodes of the graph
-            for i in range(self.num_nodes-1, -1, -1):
+            for i in range(self.num_nodes-2, -1, -1):
                 for j in range(i-1, -1, -1):
                     if curr_deg[i] == sequence[i]:
                         break
                     elif curr_deg[j] < sequence[j]:
-                        self.G.add_edge(i,j)
+                        self.G.add_edge(i+1,j+1)
                         curr_deg[i]+=1
                         curr_deg[j]+=1
             
             # Shuffle some nodes to introduce randomness
             nx.double_edge_swap(self.G, nswap=self.num_nodes/4, max_tries=1000, seed=None) # The number of swaps is a hyper parameter
 
-            if nx.is_connected(self.G) and min([val for (node, val) in self.G.degree]) >= 4:
+            if nx.is_connected(self.G) and min([val for (node, val) in self.G.degree]) >= 2:
                 break
             else:
                 self.G.clear()
+        
+        # Add the adversary
+        self.G.add_node(0)
+        adversary_edges = random.sample(list(self.G.nodes),int(self.zeta*self.num_nodes/100.0))
+        # Add edge between 0th node (adversary) and the rest zeta*num_nodes/100 nodes selected randomly
+        for node in adversary_edges:
+            self.G.add_edge(0,node)
 
         # Converts Graph to dictionary of lists
         self.adj = nx.to_dict_of_lists(self.G, nodelist=None)
@@ -69,7 +80,13 @@ class Network:
     # VERIFIED
     def show_graph(self):
         # Print the graph
-        nx.draw(self.G, with_labels=True)
+        color_map = []
+        for node in self.G:
+            if node == 0:
+                color_map.append('red')
+            else: 
+                color_map.append('green')      
+        nx.draw(self.G, node_color=color_map, with_labels=True)
         plt.show()
 
     # VERIFIED
@@ -89,6 +106,8 @@ class Network:
         low_speed = random.sample(list(range(self.num_nodes)), z) # Maintains a list of nodes whose CPU is set to low
         
         for i in range(self.num_nodes):
+            if i == 0:
+                self.attrb[i]['speed'] = 'high'
             if i in low_speed:
                 self.attrb[i]['speed'] = 'low'
             else:
@@ -128,13 +147,13 @@ class Network:
             else:
                 self.attrb[i]['hashing_power'] = hashing_power*10
 
-# # Testing the class
-# N = Network(15,10,10,600)
-# print("CPU power of first node" , N.G.nodes[0]['cpu'])
-# N.show_graph()
-# for edge in N.G.edges:
-#     print("Latency between the nodes of the first edge (in seconds): ", N.get_latency(edge[0],edge[1],17))
-#     break
+# Testing the class
+N = Network(15,60,10,10,600)
+print("CPU power of first node" , N.G.nodes[0]['cpu'])
+N.show_graph()
+for edge in N.G.edges:
+    print("Latency between the nodes of the first edge (in seconds): ", N.get_latency(edge[0],edge[1],17))
+    break
 
 
 

@@ -1,20 +1,19 @@
 import random
 import sys
+from copy import deepcopy
 from queue import PriorityQueue
 
 from treelib import Node, Tree
 
 from block import Block
-from copy import deepcopy
-import sys
 from event import CreateTXN, Event, ForwardBlock, MineBlock, ReceiveTXN
 from network import Network
 
 
 class Simulator:
-    def __init__(self, n, z0,z1, Ttx, I, max_steps=100000):
-        self.N = Network(n,z0,z1,I)
-        self.z0 = z0 # Percentage of slow nodes
+    def __init__(self, n,zeta,z1, Ttx, I, max_steps, simulation_type):
+        self.N = Network(n,zeta,self.z0,z1,I)
+        self.z0 = 50 # Percentage of slow nodes
         self.z1 = z1 # Percentage of low CPU nodes
         self.Ttx = Ttx # Mean transaction interarrival time
         self.I = I # Mean block interarrival time
@@ -22,6 +21,8 @@ class Simulator:
         self.block_id = 1
         self.mining_txn_id = -1
         self.num_min_events = 0
+        self.zeta = zeta
+        self.simulation_type = simulation_type
         self.events = PriorityQueue()
         self.global_transactions = {} # To store th TXN object indexed by the unique ID of the TXN
         self.global_Blocks = {} 
