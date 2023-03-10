@@ -56,4 +56,3 @@ After all the steps are completed, the blockchain tree, blockchain tree dictiona
 The conversion from networkx graphs to PNGs may take a while depending upon the number of nodes. 
 
 NOTE: The .txt files contain Blockchain in the following format Block_\<Block_ID\>_\<Time at which block was received at the node\>
-# CS765-Blockchain-Assignment-2
