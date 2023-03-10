@@ -73,7 +73,7 @@ class Network:
         print("Adjacency list", self.adj)
 
         # Print the degree sequence
-        print("Degree Sequence", [len(sequence)
+        print("Degree Sequence", sequence + [len(adversary_edges)])
 
     # VERIFIED
     def show_graph(self):
