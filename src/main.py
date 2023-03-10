@@ -24,8 +24,11 @@ if __name__ == "__main__":
         shutil.rmtree('networkx_graph')
     os.mkdir('blockchain_tree')
     os.mkdir('networkx_graph')
-    print(f"Converting blockchain tree graphs to png and saving to networkx_graph. This step may take a while...")
-    for node in simulator.N.nodes:
-        node.dump_blockchain_tree()
-        node.dump_networkx_graph()
+    # print(f"Converting blockchain tree graphs to png and saving to networkx_graph. This step may take a while...")
+    # for node in simulator.N.nodes:
+    #     node.dump_blockchain_tree()
+    #     node.dump_networkx_graph()
+    adversary = simulator.N.nodes[0]
+    print(adversary.blockchain_tree)
+    print(adversary.private_blockchain_tree)
         

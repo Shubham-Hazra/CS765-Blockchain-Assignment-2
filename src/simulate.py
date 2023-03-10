@@ -12,7 +12,7 @@ from network import Network
 
 class Simulator:
     def __init__(self, n,zeta,z1, Ttx, I, max_steps, simulation_type):
-        self.N = Network(n,zeta,self.z0,z1,I)
+        self.N = Network(n,zeta,50,z1,I,simulation_type)
         self.z0 = 50 # Percentage of slow nodes
         self.z1 = z1 # Percentage of low CPU nodes
         self.Ttx = Ttx # Mean transaction interarrival time

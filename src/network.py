@@ -8,7 +8,7 @@ from node import Node
 
 
 class Network:
-    def __init__(self, num_nodes,zeta,z0,z1,I):
+    def __init__(self, num_nodes,zeta,z0,z1,I,simulation_type):
         self.num_nodes = num_nodes; # Number of nodes in theconnected graph
         self.zeta = zeta # sets the percentage of nodes to which the adversary is connected to
         self.G = nx.Graph() # Stores the graph of the network
@@ -24,8 +24,11 @@ class Network:
         self.set_hashing_power(z1,I) # Sets the hashing power of the network
         self.set_static_latency() # Sets the latency of the network
         #-----------------------------------------------------------------------
-        self.nodes = [Node(i, self.attrb[i],num_nodes) for i in range(self.num_nodes)] # Array of Node objects which have operations defined in them 
-
+        self.nodes = [Node(i, self.attrb[i],num_nodes,0) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
+        if simulation_type == 1:
+            self.nodes = [Node(0, self.attrb[0],num_nodes,1)] + self.nodes  # The first node is the adversary
+        elif simulation_type == 2:
+            self.nodes = [Node(0, self.attrb[0],num_nodes,2)] + self.nodes # The first node is the adversary
     # VERIFIED
     def create_graph(self):
 
@@ -146,12 +149,13 @@ class Network:
                 self.attrb[i]['hashing_power'] = hashing_power*10
 
 # Testing the class
-N = Network(20,100,10,10,600)
-print("CPU power of first node" , N.G.nodes[0]['cpu'])
-N.show_graph()
-for edge in N.G.edges:
-    print("Latency between the nodes of the first edge (in seconds): ", N.get_latency(edge[0],edge[1],17))
-    break
+if __name__ == "__main__":
+    N = Network(20,100,10,10,600)
+    print("CPU power of first node" , N.G.nodes[0]['cpu'])
+    N.show_graph()
+    for edge in N.G.edges:
+        print("Latency between the nodes of the first edge (in seconds): ", N.get_latency(edge[0],edge[1],17))
+        break
 
 
 

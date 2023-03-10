@@ -40,11 +40,15 @@ class Node:
     def add_to_private_blockchain(self, simulator, block):
         self.private_blockchain.append(block)
         self.private_blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.curr_time}
+        self.add_block(simulator, block)
     
     def release_from_private_chain(self):
         block_to_remove = self.private_blockchain.pop(0)
         del self.private_blockchain_tree[block_to_remove.block_id]
         return block_to_remove
+    
+    def get_private_blockchain_len(self):
+        return len(self.private_blockchain)
 ######################################################################################################################################################
     # The following functions will be used to add the block that the node has heard, to its blockchain and remove common TXNs from its TXN pool
      
@@ -252,8 +256,15 @@ class Node:
             else:
                 G.add_node(key)
 
+        # Print the graph
+        color_map = []
+        for node in G:
+            if self.blockchain[node].creator_id == 0:
+                color_map.append('red')
+            else: 
+                color_map.append('green')     
         plt.figure(figsize=(10, 10))
-        nx.draw(G, with_labels=True)
+        nx.draw(G, node_color=color_map, with_labels=True)
         plt.show()
 
 

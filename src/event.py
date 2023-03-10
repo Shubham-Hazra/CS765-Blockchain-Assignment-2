@@ -274,7 +274,8 @@ class MineBlock(Event):
         # self.print_run_time()
         current = N.nodes[self.node_id]
         if self.node_id == 0:
-            new_private_blk = Block(current.pid,self.block, self.block.created_at, [],N.num_nodes,[100]+[0]*(simulator.N.num_nodes-1), simulator.block_id, len(current.longest_chain))
+            last_blck = current.longest_chain[-1]# Stores the id of the block which is being mined in the blockchain of that node
+            new_private_blk = Block(current.pid,N.nodes[self.node_id].blockchain[last_blck].block_id, self.block.created_at, [],N.num_nodes,[100]+[0]*(simulator.N.num_nodes-1), simulator.block_id, len(current.longest_chain))
             current.add_to_private_blockchain(simulator, new_private_blk) # Adds to private blockchain
 
         
