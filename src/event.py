@@ -1,11 +1,11 @@
 import random
+import sys
 import time
 from copy import deepcopy
 
 from block import Block
 from network import Network
 from transaction import Transaction
-import sys
 
 
 class Event(object):
@@ -273,7 +273,12 @@ class MineBlock(Event):
     def addEvent(self, N, simulator):
         # self.print_run_time()
         current = N.nodes[self.node_id]
+        if self.node_id == 0:
+            new_private_blk = Block(current.pid,self.block, self.block.created_at, [],N.num_nodes,[100]+[0]*(simulator.N.num_nodes-1), simulator.block_id, len(current.longest_chain))
+            current.add_to_private_blockchain(simulator, new_private_blk) # Adds to private blockchain
 
+        
+        
         # The block generation event was created at t_k (create_time) and scheduled for t_k + T_k (run_time) 
         # if there is some block in the list of blocks seen by the node such that it reached that node at timet,t_k < t < t_k + T_k then reject this block generation event
         for block_rcv_time, length in current.blocksReceiveTime: 
