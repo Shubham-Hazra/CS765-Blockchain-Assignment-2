@@ -207,6 +207,11 @@ class ForwardBlock(Event):
                 # Get the balances of the last block in the blockchain
                 prev_block_balances = N.nodes[self.node_id].blockchain[last_blck].balances
                 # Generate a new block
+                if current.pid == 0:
+                    # Create a selfish block
+                    selfish_block = Block(current.pid,self.block.block_id, self.run_time + PoW_delay, [],N.num_nodes,[100]+[0]*(N.num_nodes-1), simulator.block_id, len(current.longest_chain))
+                    # if (current.lead == 1 and block
+##############################################################################################################################################################################################
                 new_blk = Block(current.pid,self.block.block_id, self.run_time + PoW_delay, txn_to_include,N.num_nodes,deepcopy(prev_block_balances), simulator.block_id, len(current.longest_chain))
                 # Update the balances when the block is actually created - MineBlock Event
 
@@ -274,10 +279,11 @@ class MineBlock(Event):
         # self.print_run_time()
         current = N.nodes[self.node_id]
         if self.node_id == 0:
-            last_blck = current.longest_chain[-1]# Stores the id of the block which is being mined in the blockchain of that node
-            new_private_blk = Block(current.pid,N.nodes[self.node_id].blockchain[last_blck].block_id, self.block.created_at, [],N.num_nodes,[100]+[0]*(simulator.N.num_nodes-1), simulator.block_id, len(current.longest_chain))
-            current.add_to_private_blockchain(simulator, new_private_blk) # Adds to private blockchain
-
+            # last_blck = current.longest_chain[-1]# Stores the id of the block which is being mined in the blockchain of that node
+            # new_private_blk = Block(current.pid,N.nodes[self.node_id].blockchain[last_blck].block_id, self.block.created_at, [],N.num_nodes,[100]+[0]*(simulator.N.num_nodes-1), simulator.block_id, len(current.longest_chain))
+            current.add_to_private_blockchain(simulator, self.block) # Adds to private blockchain
+            print("MINING SUCCESSFUL FOR SELFISH MINER: NEW BLOCK GENERATED")
+            return
         
         
         # The block generation event was created at t_k (create_time) and scheduled for t_k + T_k (run_time) 
