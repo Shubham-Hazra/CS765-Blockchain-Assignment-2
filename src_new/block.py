@@ -16,14 +16,15 @@ class Block:
     # VERIFIED
     # Function for printing block information
     def print_block(self):
-        print("===========================================================================")
+        print("=========================================================================================================================================================")
         print("Block id: ", self.block_id)
         print("Block creator id: ", self.creator_id)
         print("Block previous: ", self.previous_id)
+        print("Block created at: ", self.created_at)
         print("Block transactions: ", self.transactions)
         print("Block balances:",self.balances)
         print("Block length: ", self.length)
-        print("===========================================================================")
+        print("==========================================================================================================================================================")
 
 # Testing
 if __name__ == '__main__':

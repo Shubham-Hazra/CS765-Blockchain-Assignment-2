@@ -18,9 +18,8 @@ def create_transaction(simulator,node):
         random_node = random.randint(0, simulator.N.num_nodes - 1)
         while (random_node == node.pid):
             random_node = random.randint(0, simulator.N.num_nodes - 1)
-        node = simulator.N.nodes[random_node]
         txn_delay = simulator.transaction_delay()
-        amount = random.randint(node.balance*0.5, int(node.balance*1.05))
+        amount = random.randint(int(node.balance*0.5), int(node.balance*1.05))
         yield env.timeout(txn_delay)
         txn = Transaction(simulator.txn_id, node.pid, random_node, amount, False)
         simulator.txn_id += 1
@@ -60,7 +59,9 @@ def mine_block(simulator,node):
         pow_time = node.get_PoW_delay()
         txns_to_include = node.get_TXN_to_include()
         coinbase_txn = Transaction(simulator.txn_id,node.pid,node.pid,50,True)
-        txns_to_include.append(coinbase_txn)
+        txns_to_include.append(coinbase_txn.txn_id)
+        simulator.global_transactions[coinbase_txn.txn_id] = coinbase_txn
+        simulator.txn_id += 1
         if (len(txns_to_include) == 0):
             yield env.timeout(pow_time)
             print("-------------------------------------------------------------------------------------------------")

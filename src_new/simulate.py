@@ -12,9 +12,12 @@ from network import Network
 
 
 class Simulator:
-    def __init__(self, n,zeta,z1, Ttx, I, max_time, simulation_type):
-        self.N = Network(n,zeta,50,z1,I,simulation_type)
-        self.z0 = 50 # Percentage of slow nodes
+    def __init__(self, n,zeta,z0,z1, Ttx, I, max_time, simulation_type):
+        if simulation_type == 0:
+            self.z0 = z0 # Percentage of slow nodes
+        else:
+            self.z0 = 50 # Percentage of slow nodes for selfish and stubborn mining
+        self.N = Network(n,zeta,self.z0,z1,I,simulation_type) # Create the network
         self.z1 = z1 # Percentage of low CPU nodes
         self.Ttx = Ttx # Mean transaction interarrival time
         self.I = I # Mean block interarrival time
@@ -28,9 +31,6 @@ class Simulator:
         self.global_transactions = {} # To store th TXN object indexed by the unique ID of the TXN
         self.global_Blocks = {} 
         self.global_Blocks["Block_0"] = Block(0,None,None,0,[],[100]*self.N.num_nodes,0)
-        self.run()
-        self.print_blockchains()
-        self.visualize()
         
     # VERIFIED
     def transaction_delay(self):
