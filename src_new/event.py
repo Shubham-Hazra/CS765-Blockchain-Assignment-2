@@ -9,6 +9,7 @@ from block import Block
 from network import Network
 from transaction import Transaction
 
+VALID_RATIO = 0.03
 
 def create_transaction(simulator,node):
     while True:
@@ -19,7 +20,8 @@ def create_transaction(simulator,node):
         while (random_node == node.pid):
             random_node = random.randint(0, simulator.N.num_nodes - 1)
         txn_delay = simulator.transaction_delay()
-        amount = random.randint(int(node.balance*0.5), int(node.balance*1.05))
+        amount = node.balance * VALID_RATIO
+        node.balance -= amount
         yield env.timeout(txn_delay)
         txn = Transaction(simulator.txn_id, node.pid, random_node, amount, False)
         simulator.txn_id += 1
@@ -27,7 +29,6 @@ def create_transaction(simulator,node):
         txn_set = set()
         txn_set.add(txn.txn_id)
         node.txn_list = node.txn_list | txn_set
-        node.txn_pool = node.txn_pool | txn_set
         receive_list = [False]*simulator.N.num_nodes
         receive_list[node.pid] = True
         forward_transactions(simulator,txn,node,receive_list)
@@ -49,7 +50,6 @@ def receive_transactions(simulator,txn,node,latency,received_list):
     txn_set = set()
     txn_set.add(txn.txn_id)
     node.txn_list = node.txn_list | txn_set
-    node.txn_pool = node.txn_pool | txn_set
     # print("Node {} received {} at time {}".format(node.pid,txn.txn_id,env.now))
     forward_transactions(simulator,txn,node,received_list)
 
@@ -62,18 +62,18 @@ def mine_block(simulator,node):
         txns_to_include.append(coinbase_txn.txn_id)
         simulator.global_transactions[coinbase_txn.txn_id] = coinbase_txn
         simulator.txn_id += 1
-        if (len(txns_to_include) == 0):
+        if (len(txns_to_include) < 2):
             yield env.timeout(pow_time)
             print("-------------------------------------------------------------------------------------------------")
-            print("Node {} did not any TXNs to include at time {}".format(node.pid,env.now))
+            print("Node {} did not have any TXNs to include at time {}".format(node.pid,env.now))
             continue
         prev_block = node.mining_at_block
         balances = deepcopy(prev_block.balances)
         yield env.timeout(pow_time)
         if (node.mining_at_block.block_id == prev_block.block_id):
             print("-------------------------------------------------------------------------------------------------")
-            print("Node {} mined a block at time {}".format(node.pid,env.now))
             block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,txns_to_include,balances,prev_block.length+1)
+            print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
             node.update_balances(simulator,block)
             simulator.block_id += 1
             valid = node.add_block(simulator,block)
@@ -105,9 +105,14 @@ def receive_block(simulator,block,node,latency,received_list):
     yield env.timeout(latency)
     print("-------------------------------------------------------------------------------------------------")
     print("Node {} received block {} at time {}".format(node.pid,block.block_id,env.now))
-    node.add_block(simulator,block)
+    added = node.add_block(simulator,block)
     node.blocksReceiveTime.append(f"{block.block_id}: {env.now}")
     print("-------------------------------------------------------------------------------------------------")
-    forward_block(simulator,block,node,received_list)
+    if added:
+        forward_block(simulator,block,node,received_list)
+    else:
+        print("-------------------------------------------------------------------------------------------------")
+        print("Node {} received an invalid block {} at time {}".format(node.pid,block.block_id,env.now))
+        print("-------------------------------------------------------------------------------------------------")
 
 

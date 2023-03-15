@@ -94,8 +94,8 @@ class Node:
                 self.mining_at_block = block
                 self.public_max_len = self.blockchain[block.block_id].length # Updating the length of the longest chain
                 self.longest_chain = self.find_longest_chain() # Updating the longest chain
-                self.update_txn_pool() # Updating the list of transactions that the peer can include in a block
                 self.balance = self.blockchain[block.block_id].balances[self.pid] # Updating the balance of the peer
+                self.update_txn_pool() # Updating the list of transactions that the peer can include in a block
             print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
             return True
         else:
@@ -110,7 +110,6 @@ class Node:
     def validate_block(self,simulator, block):
         # Find all the TXNs in the longest chain (parent TXNs) and checks whether TXNs match with the TXns in the block - if yes, then reject, else, attach
         parent_txns = self.find_parent_txns(block)
-
         # Checks whether TXNs in the block are there in the main blockchain
         for txn in block.transactions[:-1]:
             if txn in parent_txns: # Checking if the transaction is already included in the blockchain
@@ -120,8 +119,8 @@ class Node:
         # Validates the TXNs (balances after the TXN are executed) in the block 
         for txn_id in block.transactions[:-1]:
             txn = simulator.global_transactions[txn_id]
-            if block.balances[txn.sender_id]<0:
-                print(self.pid,"says that",block.block_id,"has invalid TXNs")
+            if block.balances[txn.sender_id]<0: # Checking if the balance of the sender is negative
+                print("Balance of",txn.sender_id,"is negative")
                 return False
 
         # If no matching TXNs, (i.e. when it comes out of the loop), then return True
@@ -155,6 +154,8 @@ class Node:
     def find_parent_txns(self,block):
         txns = []
         parent = block.previous_id
+        if parent == None:
+            return txns
         while parent != "Block_0":
             if parent in self.blockchain.keys():
                 txns.extend(self.blockchain[parent].transactions)
@@ -169,7 +170,8 @@ class Node:
     # Transaction list and included TXN need to be updated first - which has been done
     def update_txn_pool(self):
         txn_pool = set()
-        included_txn = self.find_parent_txns(self.blockchain[self.longest_chain[-1]])
+        included_txn = self.find_parent_txns(self.mining_at_block)
+        included_txn.extend(self.mining_at_block.transactions[:-1])
         for txn in self.txn_list:
             if txn not in included_txn:
                 txn_pool.add(txn)
@@ -181,6 +183,7 @@ class Node:
     # VERIFIED
     # Get TXN from the TXN pool which are not yet included in any block that the node has heard
     def get_TXN_to_include(self):
+        self.update_txn_pool()
         # Return false if TXN pool is empty
         if not self.txn_pool:
             # print("NO TXNs to include")
@@ -190,8 +193,8 @@ class Node:
             upper_limit = 999 # Upper limit is 999 + mining fee TXN + empty block (1 KB) + rest TXNs (999 KB)
         else:
             upper_limit = len(self.txn_pool)
-        num_txn_to_mine = random.randint(1,upper_limit) # Number of transactions to be included in the block
-        txn_to_mine = random.sample(list(self.txn_list),num_txn_to_mine) # Transactions to be included in the block
+        num_txn_to_mine = random.randint(int(upper_limit*0.9),upper_limit) # Number of transactions to be included in the block
+        txn_to_mine = random.sample(list(self.txn_pool),num_txn_to_mine) # Transactions to be included in the block
         return txn_to_mine
 
     # VERIFIED

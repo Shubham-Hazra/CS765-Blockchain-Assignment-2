@@ -43,8 +43,9 @@ class Simulator:
         self.env.run(until = self.max_time)
 
     # VERIFIED
-    def print_blockchains(self):
-        for node in self.N.nodes[0:6]:
+    def print_blockchains(self,num = 4):
+        num = min(num,self.N.num_nodes-1)
+        for node in self.N.nodes[0:num]:
             node.print_blockchain()
 
     # VERIFIED
@@ -62,10 +63,7 @@ class Simulator:
 # Test
 if __name__ == '__main__':
     S = Simulator(100, 0, 0, 1000, 6, 10000,0)
-    times = []
-    for i in range(10000):
-        for node in S.N.nodes:
-            pow_time = node.get_PoW_delay()
-            times.append(pow_time)
-    print("Average PoW time is {}".format(sum(times)/len(times)))
+    S.run()
+    S.print_blockchains()
+    S.visualize()
 
