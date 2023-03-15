@@ -23,9 +23,13 @@ class Network:
         #-----------------------------------------------------------------------
         self.set_hashing_power(z1,I) # Sets the hashing power of the network
         self.set_static_latency() # Sets the latency of the network
+        self.simulation_type = simulation_type # 0 for normal, 1 for adversary, 2 for adversary 
         #-----------------------------------------------------------------------
-        self.nodes = [Node(i, self.attrb[i],num_nodes) for i in range(0,self.num_nodes)] # Array of Node objects which have operations defined in them
-
+        if simulation_type == 0:
+            self.nodes = [Node(0, self.attrb[0],num_nodes,False)]+[Node(i, self.attrb[i],num_nodes) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
+        elif simulation_type == 1 or simulation_type == 2:
+            self.nodes = [Node(0, self.attrb[0],num_nodes,True,self.simulation_type)]+[Node(i, self.attrb[i],num_nodes,False,self.simulation_type) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
+    
     def create_graph(self):
 
         # Repeat while the graph is connected
@@ -139,6 +143,9 @@ class Network:
         k = int(z*self.num_nodes/100.0)
         hashing_power = 1/(k + 10*(self.num_nodes - k))
         for i in range(self.num_nodes):
+            if i == 0:
+                self.attrb[i]['hashing_power'] = hashing_power*10
+                continue
             if self.attrb[i]['cpu'] == 'low':
                 self.attrb[i]['hashing_power'] = hashing_power
             else:
@@ -147,11 +154,8 @@ class Network:
 # Testing the class
 if __name__ == "__main__":
     N = Network(20,100,10,10,600,1)
-    print("CPU power of first node" , N.G.nodes[0]['cpu'])
-    N.show_graph()
-    for edge in N.G.edges:
-        print("Latency between the nodes of the first edge (in seconds): ", N.get_latency(edge[0],edge[1],1))
-        break
+    for nodes in N.nodes:
+        print(nodes.hashing_power)
 
 
 

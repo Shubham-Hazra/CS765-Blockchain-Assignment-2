@@ -62,32 +62,46 @@ def mine_block(simulator,node):
         txns_to_include.append(coinbase_txn.txn_id)
         simulator.global_transactions[coinbase_txn.txn_id] = coinbase_txn
         simulator.txn_id += 1
-        if (len(txns_to_include) < 2):
-            yield env.timeout(pow_time)
-            print("-------------------------------------------------------------------------------------------------")
-            print("Node {} did not have any TXNs to include at time {}".format(node.pid,env.now))
-            continue
-        prev_block = node.mining_at_block
-        balances = deepcopy(prev_block.balances)
-        yield env.timeout(pow_time)
-        if (node.mining_at_block.block_id == prev_block.block_id):
-            print("-------------------------------------------------------------------------------------------------")
-            block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,txns_to_include,balances,prev_block.length+1)
-            print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
-            node.update_balances(simulator,block)
-            simulator.block_id += 1
-            valid = node.add_block(simulator,block)
-            if valid == False:
+        if node.is_adversary == False:
+            if (len(txns_to_include) < 2):
+                yield env.timeout(pow_time)
+                print("-------------------------------------------------------------------------------------------------")
+                print("Node {} did not have any TXNs to include at time {}".format(node.pid,env.now))
                 continue
+            prev_block = node.mining_at_block
+            balances = deepcopy(prev_block.balances)
+            yield env.timeout(pow_time)
+            if (node.mining_at_block.block_id == prev_block.block_id):
+                print("-------------------------------------------------------------------------------------------------")
+                block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,txns_to_include,balances,prev_block.length+1)
+                print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
+                node.update_balances(simulator,block)
+                simulator.block_id += 1
+                valid = node.add_block(simulator,block)
+                if valid == False:
+                    continue
+                node.blocksReceiveTime.append(f"{block.block_id}_{env.now}")
+                simulator.global_Blocks[block.block_id] = block
+                received_list = [False]*simulator.N.num_nodes 
+                received_list[node.pid] = True
+                forward_block(simulator,block,node,received_list)
+            else:
+                print("-------------------------------------------------------------------------------------------------")
+                print("Another node mined a block before node {} at time {}".format(node.pid,env.now))
+            print("-------------------------------------------------------------------------------------------------")
+        else:
+            yield env.timeout(pow_time)
+            prev_block = node.private_blockchain[-1]
+            block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,[],[100]+[0]*(simulator.N.num_nodes -1),prev_block.length+1)
+            print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
+            simulator.block_id += 1
+            node.add_to_private_blockchain(simulator,block)
+            node.add_block(simulator,block)
             node.blocksReceiveTime.append(f"{block.block_id}_{env.now}")
             simulator.global_Blocks[block.block_id] = block
             received_list = [False]*simulator.N.num_nodes 
             received_list[node.pid] = True
             forward_block(simulator,block,node,received_list)
-        else:
-            print("-------------------------------------------------------------------------------------------------")
-            print("Another node mined a block before node {} at time {}".format(node.pid,env.now))
-        print("-------------------------------------------------------------------------------------------------")
 
 
 def forward_block(simulator,block,node,received_list):
@@ -108,11 +122,14 @@ def receive_block(simulator,block,node,latency,received_list):
     added = node.add_block(simulator,block)
     node.blocksReceiveTime.append(f"{block.block_id}: {env.now}")
     print("-------------------------------------------------------------------------------------------------")
-    if added:
-        forward_block(simulator,block,node,received_list)
-    else:
-        print("-------------------------------------------------------------------------------------------------")
-        print("Node {} received an invalid block {} at time {}".format(node.pid,block.block_id,env.now))
-        print("-------------------------------------------------------------------------------------------------")
+    if node.is_adversary == False:
+        if added:
+            forward_block(simulator,block,node,received_list)
+        else:
+            print("-------------------------------------------------------------------------------------------------")
+            print("Node {} received an invalid block {} at time {}".format(node.pid,block.block_id,env.now))
+            print("-------------------------------------------------------------------------------------------------")
 
 
+
+    

@@ -13,13 +13,15 @@ from block import *
 
 
 class Node:
-    def __init__(self, pid, attrb, num_nodes):
+    def __init__(self, pid, attrb, num_nodes,is_adversary=False,simulation_type=0):
         self.pid = pid  # Unique Id of the peer
         self.cpu = attrb['cpu']  # CPU speed of the peer
         self.hashing_power = attrb['hashing_power']  # Hashing power of the peer
         self.speed = attrb['speed']  # Speed of the peer
         self.I = attrb['I']  # Average interarrival time of the blocks
         self.balance = 100  # Balance of the peer
+        self.is_adversary = is_adversary  # True if the peer is an adversary
+        self.simulation_type = simulation_type  # 0 for normal, 1 for adversary, 2 for adversary
         #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.blockchain_tree = {"Block_0": {"parent": None, "time":0}} # Blockchain tree of the peer
         self.blockchain = {"Block_0":Block(0,None,None,0,[],[100]*num_nodes,0)}  # Blockchain of the peer - stores the block objects, Initially the genesis block is added
@@ -35,19 +37,14 @@ class Node:
         #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.blocksReceiveTime = []
         #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-        self.private_blockchain = []
-        self.private_blockchain_tree = {}
+        self.private_blockchain = [Block(0,None,None,0,[],[100]*num_nodes,0)]
+        self.private_blockchain_tree = {"Block_0": {"parent": None, "time":0}}
 ######################################################################################################################################################
     # Functions for the adversary
     def add_to_private_blockchain(self, simulator, block):
         self.private_blockchain.append(block)
         self.private_blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.env.now}
         self.add_block(simulator, block)
-    
-    def release_from_private_chain(self):
-        block_to_remove = self.private_blockchain.pop(0)
-        del self.private_blockchain_tree[block_to_remove.block_id]
-        return block_to_remove
     
     def get_private_blockchain_len(self):
         return len(self.private_blockchain)
@@ -234,7 +231,7 @@ class Node:
         # Print the graph
         color_map = []
         for node in G:
-            if self.blockchain[node].creator_id == 0 :
+            if self.blockchain[node].creator_id == 0 and self.simulation_type != 0:
                 color_map.append('red')
             else: 
                 color_map.append('green')     
