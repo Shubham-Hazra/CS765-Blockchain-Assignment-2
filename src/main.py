@@ -6,7 +6,7 @@ from simulate import Simulator
 
 # Take command line arguments
 cli = argparse.ArgumentParser() # Command line interface
-cli.add_argument("--n", type=int, default=30, help="Number of nodes") # Number of nodes
+cli.add_argument("--n", type=int, default=20, help="Number of nodes") # Number of nodes
 cli.add_argument("--zeta", type=int, default=50, help="Percentage of nodes the adversary is connected to") # Percentage of nodes the adversary is connected to
 cli.add_argument("--z0", type=float, default=0, help="Percentage of slow nodes") # Percentage of slow nodes
 cli.add_argument("--z1", type=float, default=0, help="Percentage of low CPU nodes") # Percentage of low CPU nodes
@@ -21,8 +21,6 @@ simulation_type = args.type
 if __name__ == "__main__":
     simulator = Simulator(args.n,args.zeta,args.z0,args.z1, args.Ttx, args.I, args.time, simulation_type)
     simulator.run()
-    for node in simulator.N.nodes:
-        print(node.hashing_power)
     simulator.print_blockchains()
     # simulator.visualize()
 ######################################################################################################################################################################    
@@ -38,3 +36,5 @@ if __name__ == "__main__":
     #     node.dump_blockchain_tree()
     #     node.dump_networkx_graph()
 ###################################################################################################################################################################### 
+node = simulator.N.nodes[0]
+print(len(node.private_blockchain))

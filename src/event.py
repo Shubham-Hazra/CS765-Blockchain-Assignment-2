@@ -91,17 +91,17 @@ def mine_block(simulator,node):
             print("-------------------------------------------------------------------------------------------------")
         else:
             yield env.timeout(pow_time)
-            prev_block = node.private_blockchain[-1]
-            block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,[],[100]+[0]*(simulator.N.num_nodes -1),prev_block.length+1)
+            prev_block = node.mining_at_block
+            balances = deepcopy(prev_block.balances)
+            block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,[],balances,prev_block.length+1)
             print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
             simulator.block_id += 1
             node.add_to_private_blockchain(simulator,block)
-            node.add_block(simulator,block)
             node.blocksReceiveTime.append(f"{block.block_id}_{env.now}")
             simulator.global_Blocks[block.block_id] = block
-            received_list = [False]*simulator.N.num_nodes 
-            received_list[node.pid] = True
-            forward_block(simulator,block,node,received_list)
+            # received_list = [False]*simulator.N.num_nodes 
+            # received_list[node.pid] = True
+            # forward_block(simulator,block,node,received_list)
 
 
 def forward_block(simulator,block,node,received_list):
@@ -115,6 +115,7 @@ def forward_block(simulator,block,node,received_list):
         env.process(receive_block(simulator,block,simulator.N.nodes[neighbor],latency,received_list))
 
 def receive_block(simulator,block,node,latency,received_list):
+    prev_lead =node.mining_at_block.length - node.mining_at_block.length
     env = simulator.env
     yield env.timeout(latency)
     print("-------------------------------------------------------------------------------------------------")
@@ -128,8 +129,40 @@ def receive_block(simulator,block,node,latency,received_list):
         else:
             print("-------------------------------------------------------------------------------------------------")
             print("Node {} received an invalid block {} at time {}".format(node.pid,block.block_id,env.now))
-            print("-------------------------------------------------------------------------------------------------")
+            print("-------------------------------------------------------------------------------------------------")  
+
+    else:
+        if node.lead <= 1:
+            for adv_block in node.private_blockchain:
+                received_list = [False]*simulator.N.num_nodes 
+                received_list[node.pid] = True
+                forward_block(simulator,adv_block,node,received_list)
+            
+            node.private_blockchain = []
+            node.lead = 0
+    # else: # Handling adversary node - if it is adversary, it will do these extra things
+    #     # Update the public mining level block
+    #     if block.length > node.public_mining_blk.length:
+    #         node.public_mining_blk = block
+    #     new_lead = node.mining_blk.length - node.public_mining_blk.length
+    #     if new_lead<0:
+    #         node.mining_blk = node.public_mining_blk
+    #         node.private_len=0
+    #     else:
+    #         release_blocks(simulator, node,new_lead,prev_lead)
 
 
+def release_blocks(simulator,node,new_lead,prev_lead):
+    env = simulator.env
+    block = node.mining_at_block
+    lead=1
+    while (lead <= prev_lead):
+        if lead > new_lead:
+            for l in node.peers:
+                received_list = [False]*simulator.N.num_nodes 
+                received_list[node.pid] = True
+                forward_block(simulator,block,node,received_list)
+        block  = block.parent_ptr
+        lead = lead+1 
 
     

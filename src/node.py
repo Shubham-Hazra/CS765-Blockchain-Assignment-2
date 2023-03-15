@@ -30,6 +30,7 @@ class Node:
         self.private_len = 0  # Length of the private chain
         self.lead = 0  # Lead of the adversary
         self.mining_at_block = Block(0,None,None,0,[],[100]*num_nodes,0)
+        self.public_mining_block = Block(0,None,None,0,[],[100]*num_nodes,0)
         #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.txn_pool = set() # List of all transactions that the peer can include in a block
         self.txn_list = set()  # List of all transactions seen till now by the node
@@ -83,21 +84,48 @@ class Node:
     # VERIFIED
     # Adds block to the longest chain in the blockchain after validating the TXNs
     def add_block_to_chain(self,simulator, block):
-        if self.validate_block(simulator, block): # Checking if the block is valid
-            self.blockchain[block.block_id] = block # Adding the block to the blockchain
-            self.blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.env.now} # Adding the block to the blockchain tree
-            self.blockchain[block.block_id].length = self.blockchain[block.previous_id].length + 1 # Updating the length of the block
-            if self.blockchain[block.block_id].length > self.public_max_len: # Checking if the block is the longest block
-                self.mining_at_block = block
-                self.public_max_len = self.blockchain[block.block_id].length # Updating the length of the longest chain
-                self.longest_chain = self.find_longest_chain() # Updating the longest chain
-                self.balance = self.blockchain[block.block_id].balances[self.pid] # Updating the balance of the peer
-                self.update_txn_pool() # Updating the list of transactions that the peer can include in a block
-            print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
-            return True
-        else:
-            print(f"{self.pid} says {block.block_id} is invalid")
-            return False
+        if self.pid != 0: 
+            if self.validate_block(simulator, block): # Checking if the block is valid
+                self.blockchain[block.block_id] = block # Adding the block to the blockchain
+                self.blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.env.now} # Adding the block to the blockchain tree
+                self.blockchain[block.block_id].length = self.blockchain[block.previous_id].length + 1 # Updating the length of the block
+                if self.blockchain[block.block_id].length > self.public_max_len: # Checking if the block is the longest block
+                    self.mining_at_block = block
+                    self.public_max_len = self.blockchain[block.block_id].length # Updating the length of the longest chain
+                    self.longest_chain = self.find_longest_chain() # Updating the longest chain
+                    if block.creator_id != 0:
+                        self.balance = self.blockchain[block.block_id].balances[self.pid] # Updating the balance of the peer
+                    self.update_txn_pool() # Updating the list of transactions that the peer can include in a block
+                print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
+                return True
+            else:
+                print(f"{self.pid} says {block.block_id} is invalid")
+                return False
+        elif self.pid == 0:
+            if self.validate_block(simulator, block):
+                self.blockchain[block.block_id] = block # Adding the block to the blockchain
+                self.blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.env.now} # Adding the block to the blockchain tree
+                self.blockchain[block.block_id].length = self.blockchain[block.previous_id].length + 1 # Updating the length of the block
+                if block.creator_id != 0:
+                    self.public_max_len = self.blockchain[block.block_id].length # Updating the length of the longest chain
+                    if self.blockchain[block.block_id].length > self.private_len: # Checking if the block is the longest block
+                        self.longest_chain = self.find_longest_chain() # Updating the longest chain
+                        self.mining_at_block = block
+                        self.private_len = self.blockchain[block.block_id].length # Updating the length of the longest private chain
+                        self.balance = self.blockchain[block.block_id].balances[self.pid] # Updating the balance of the peer
+                        print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
+                    self.lead = self.private_len - self.public_max_len # Updating the lead of the adversary
+                    return True
+                if self.blockchain[block.block_id].length >= self.public_max_len: # Checking if the block is the longest block
+                    self.mining_at_block = block
+                    self.longest_chain = self.find_longest_chain() # Updating the longest chain
+                self.private_len = self.blockchain[block.block_id].length # Updating the length of the longest private chain
+                self.lead = self.private_len - self.public_max_len # Updating the lead of the adversary
+                print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
+                return True
+            else:
+                print(f"{self.pid} says {block.block_id} is invalid")
+                return False
 
     # VERIFIED
     # Function to check if the block is valid
@@ -231,7 +259,7 @@ class Node:
         # Print the graph
         color_map = []
         for node in G:
-            if self.blockchain[node].creator_id == 0 and self.simulation_type != 0:
+            if self.blockchain[node].creator_id == 0:
                 color_map.append('red')
             else: 
                 color_map.append('green')     

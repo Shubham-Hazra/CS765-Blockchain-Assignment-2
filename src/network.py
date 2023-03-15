@@ -144,7 +144,7 @@ class Network:
         hashing_power = 1/(k + 10*(self.num_nodes - k))
         for i in range(self.num_nodes):
             if i == 0:
-                self.attrb[i]['hashing_power'] = hashing_power*10
+                self.attrb[i]['hashing_power'] = hashing_power*30
                 continue
             if self.attrb[i]['cpu'] == 'low':
                 self.attrb[i]['hashing_power'] = hashing_power
