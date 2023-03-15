@@ -31,6 +31,7 @@ class Node:
         self.lead = 0  # Lead of the adversary
         self.mining_at_block = Block(0,None,None,0,[],[100]*num_nodes,0)
         self.public_mining_block = Block(0,None,None,0,[],[100]*num_nodes,0)
+        self.state_0_dash = False
         #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.txn_pool = set() # List of all transactions that the peer can include in a block
         self.txn_list = set()  # List of all transactions seen till now by the node

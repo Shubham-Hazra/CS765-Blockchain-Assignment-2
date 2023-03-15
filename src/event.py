@@ -99,6 +99,14 @@ def mine_block(simulator,node):
             node.add_to_private_blockchain(simulator,block)
             node.blocksReceiveTime.append(f"{block.block_id}_{env.now}")
             simulator.global_Blocks[block.block_id] = block
+            if node.state_0_dash == True:
+                    print(f"Released {block.block_id} Immediately at time {env.now} with lead {node.lead} and length {block.length}")
+                    received_list = [False]*simulator.N.num_nodes 
+                    received_list[node.pid] = True
+                    node.private_blockchain.pop(0)
+                    forward_block(simulator,block,node,received_list)
+                    node.state_0_dash = False
+                    node.lead = 0
 
 
 def forward_block(simulator,block,node,received_list):
@@ -128,19 +136,32 @@ def receive_block(simulator,block,node,latency,received_list):
             print("-------------------------------------------------------------------------------------------------")  
 
     else:
-        if node.lead <= 1:
-            for adv_block in node.private_blockchain:
-                print("Releasing block")
+        if node.simulation_type == 1: 
+            if node.lead == 0 and len(node.private_blockchain) > 0:
+                print(len(node.private_blockchain))
+                adv_block = node.private_blockchain.pop(0)
+                print("Reached 0' state after making block {} at time {}".format(adv_block.block_id,env.now))
+                print("Reached 0' state after receiving block {} at time {}".format(block.block_id,env.now))
+                node.state_0_dash = True
                 received_list = [False]*simulator.N.num_nodes 
                 received_list[node.pid] = True
                 forward_block(simulator,adv_block,node,received_list)
-            node.private_blockchain = []
-            node.lead = 0
-        elif node.lead > 1:
-            adv_block = node.private_blockchain.pop(0)
-            received_list = [False]*simulator.N.num_nodes
-            received_list[node.pid] = True
-            forward_block(simulator,adv_block,node,received_list)
+                node.private_blockchain = []
+                node.lead = 0
+            elif node.lead == 1:
+                for adv_block in node.private_blockchain:
+                    received_list = [False]*simulator.N.num_nodes 
+                    received_list[node.pid] = True
+                    forward_block(simulator,adv_block,node,received_list)
+                node.private_blockchain = []
+                node.lead = 0
+            elif node.lead > 1:
+                adv_block = node.private_blockchain.pop(0)
+                received_list = [False]*simulator.N.num_nodes
+                received_list[node.pid] = True
+                forward_block(simulator,adv_block,node,received_list)
+        elif node.simulation_type == 2:
+            pass
 
 
 def release_blocks(simulator,node,new_lead,prev_lead):
