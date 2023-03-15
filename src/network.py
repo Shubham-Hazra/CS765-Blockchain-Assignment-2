@@ -24,12 +24,8 @@ class Network:
         self.set_hashing_power(z1,I) # Sets the hashing power of the network
         self.set_static_latency() # Sets the latency of the network
         #-----------------------------------------------------------------------
-        self.nodes = [Node(i, self.attrb[i],num_nodes,0) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
-        if simulation_type == 1:
-            self.nodes = [Node(0, self.attrb[0],num_nodes,1)] + self.nodes  # The first node is the adversary
-        elif simulation_type == 2:
-            self.nodes = [Node(0, self.attrb[0],num_nodes,2)] + self.nodes # The first node is the adversary
-    # VERIFIED
+        self.nodes = [Node(i, self.attrb[i],num_nodes) for i in range(0,self.num_nodes)] # Array of Node objects which have operations defined in them
+
     def create_graph(self):
 
         # Repeat while the graph is connected
@@ -73,10 +69,10 @@ class Network:
 
         # Converts Graph to dictionary of lists
         self.adj = nx.to_dict_of_lists(self.G, nodelist=None)
-        print("Adjacency list", self.adj)
+        # print("Adjacency list", self.adj)
 
         # Print the degree sequence
-        print("Degree Sequence", sequence + [len(adversary_edges)])
+        # print("Degree Sequence", sequence + [len(adversary_edges)])
 
     # VERIFIED
     def show_graph(self):
@@ -132,7 +128,7 @@ class Network:
                 self.G[node1][node2]['c'] = 100 # Link speed is 100Mbps if both of the nodes have high speed
 
     # VERIFIED
-    def get_latency(self, node1, node2, packet_size):  # returns the latency of the network # NOTE: Packet size in MB
+    def get_latency(self, node1, node2, packet_size):  # returns the latency of the network # NOTE: Packet size in Mb
         return self.G[node1][node2]['p'] + packet_size/self.G[node1][node2]['c'] + random.expovariate((self.G[node1][node2]['c']*1000)/96) # Queueing delay at node 1
 
     # VERIFIED
@@ -150,11 +146,11 @@ class Network:
 
 # Testing the class
 if __name__ == "__main__":
-    N = Network(20,100,10,10,600)
+    N = Network(20,100,10,10,600,1)
     print("CPU power of first node" , N.G.nodes[0]['cpu'])
     N.show_graph()
     for edge in N.G.edges:
-        print("Latency between the nodes of the first edge (in seconds): ", N.get_latency(edge[0],edge[1],17))
+        print("Latency between the nodes of the first edge (in seconds): ", N.get_latency(edge[0],edge[1],1))
         break
 
 

@@ -13,33 +13,35 @@ from block import *
 
 
 class Node:
-    def __init__(self, pid, attrb, num_nodes, isAdversary):
-
+    def __init__(self, pid, attrb, num_nodes):
         self.pid = pid  # Unique Id of the peer
         self.cpu = attrb['cpu']  # CPU speed of the peer
         self.hashing_power = attrb['hashing_power']  # Hashing power of the peer
         self.speed = attrb['speed']  # Speed of the peer
         self.I = attrb['I']  # Average interarrival time of the blocks
+        self.balance = 100  # Balance of the peer
+        #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.blockchain_tree = {"Block_0": {"parent": None, "time":0}} # Blockchain tree of the peer
-        self.blockchain = {"Block_0":Block(None,None,None,None,0,[100]*num_nodes,0,0)}  # Blockchain of the peer - stores the block objects, Initially the genesis block is added
+        self.blockchain = {"Block_0":Block(0,None,None,0,[],[100]*num_nodes,0)}  # Blockchain of the peer - stores the block objects, Initially the genesis block is added
         self.longest_chain = ["Block_0"] # Longest chain of the peer as a list of block ids
-        self.max_len = 0  # Length of the longest chain
+        self.public_max_len = 0  # Length of the longest public chain
+        self.private_len = 0  # Length of the private chain
+        self.lead = 0  # Lead of the adversary
+        self.mining_at_block = Block(0,None,None,0,[],[100]*num_nodes,0)
         #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.txn_pool = set() # List of all transactions that the peer can include in a block
         self.txn_list = set()  # List of all transactions seen till now by the node
-        self.included_txn = set()  # List of transactions that the peer has included in the longest chain
         self.block_buffer = set()  # List of blocks that the peer has heard but not added to its blockchain because parent block is not yet added
         #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.blocksReceiveTime = []
         #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.private_blockchain = []
         self.private_blockchain_tree = {}
-        self.isAdversary = isAdversary # IsAdvsersary = 1 means selfish mining and isAdversary = 2 is stubborn  mining
 ######################################################################################################################################################
     # Functions for the adversary
     def add_to_private_blockchain(self, simulator, block):
         self.private_blockchain.append(block)
-        self.private_blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.curr_time}
+        self.private_blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.env.now}
         self.add_block(simulator, block)
     
     def release_from_private_chain(self):
@@ -57,8 +59,6 @@ class Node:
     def add_block(self,simulator, block):
         if block.block_id in self.blockchain.keys():
             return False
-        # Extracting the non-mining fee TXNs
-        block.trasactions = block.transactions[:-1]
 
         # Updating the list of transactions that the peer has seen 
         self.update_txn_list(block) 
@@ -67,15 +67,18 @@ class Node:
         if block.previous_id in self.blockchain.keys(): # Checking if the parent block is already in the blockchain
             if not self.add_block_to_chain(simulator, block): # Return false if validation is wrong
                 return False
-        elif block.previous_id not in self.block_buffer:
+        else:
             self.block_buffer.add(block) # Adding the block to the block buffer
 
         # Also check whether there is a block in the buffer whose parent has come in the main blockchain
         to_discard = set()
-        for block in self.block_buffer:
+        sorted_buffer_list = list(self.block_buffer)
+        sorted_buffer_list.sort(key=lambda x: int(x.block_id[6:]))
+        for block in sorted_buffer_list:
             if block.previous_id in self.blockchain.keys():
                 if not self.add_block_to_chain(simulator, block):
-                    return False
+                    to_discard.add(block)
+                    continue
                 to_discard.add(block)
         self.block_buffer = self.block_buffer - to_discard
         return True
@@ -85,15 +88,15 @@ class Node:
     def add_block_to_chain(self,simulator, block):
         if self.validate_block(simulator, block): # Checking if the block is valid
             self.blockchain[block.block_id] = block # Adding the block to the blockchain
-            self.blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.curr_time} # Adding the block to the blockchain tree
+            self.blockchain_tree[block.block_id] = {"parent": block.previous_id, "time": simulator.env.now} # Adding the block to the blockchain tree
             self.blockchain[block.block_id].length = self.blockchain[block.previous_id].length + 1 # Updating the length of the block
-            if self.blockchain[block.block_id].length > self.max_len: # Checking if the block is the longest block
-                self.max_len = self.blockchain[block.block_id].length # Updating the length of the longest chain
+            if self.blockchain[block.block_id].length > self.public_max_len: # Checking if the block is the longest block
+                self.mining_at_block = block
+                self.public_max_len = self.blockchain[block.block_id].length # Updating the length of the longest chain
                 self.longest_chain = self.find_longest_chain() # Updating the longest chain
-                self.update_included_txn() # Updating the list of transactions that the peer has included in the longest chain
+                self.balance = self.blockchain[block.block_id].balances[self.pid] # Updating the balance of the peer
                 self.update_txn_pool() # Updating the list of transactions that the peer can include in a block
             print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
-            print("HELLO")
             return True
         else:
             print(f"{self.pid} says {block.block_id} is invalid")
@@ -107,9 +110,8 @@ class Node:
     def validate_block(self,simulator, block):
         # Find all the TXNs in the longest chain (parent TXNs) and checks whether TXNs match with the TXns in the block - if yes, then reject, else, attach
         parent_txns = self.find_parent_txns(block)
-
         # Checks whether TXNs in the block are there in the main blockchain
-        for txn in block.transactions:
+        for txn in block.transactions[:-1]:
             if txn in parent_txns: # Checking if the transaction is already included in the blockchain
                 print(self.pid,"says that",txn,"is already there in the chain")
                 return False
@@ -117,8 +119,8 @@ class Node:
         # Validates the TXNs (balances after the TXN are executed) in the block 
         for txn_id in block.transactions[:-1]:
             txn = simulator.global_transactions[txn_id]
-            if block.balances[txn.sender_id]<0:
-                print(self.pid,"says that",block.block_id,"has invalid TXNs")
+            if block.balances[txn.sender_id]<0: # Checking if the balance of the sender is negative
+                print("Balance of",txn.sender_id,"is negative")
                 return False
 
         # If no matching TXNs, (i.e. when it comes out of the loop), then return True
@@ -152,73 +154,47 @@ class Node:
     def find_parent_txns(self,block):
         txns = []
         parent = block.previous_id
+        if parent == None:
+            return txns
         while parent != "Block_0":
             if parent in self.blockchain.keys():
                 txns.extend(self.blockchain[parent].transactions)
                 parent = self.blockchain_tree[parent]["parent"]
         return txns
-
-    # VERIFIED
-    # Function to update the list of transactions included in the longest chain
-    def update_included_txn(self):
-        self.included_txn = set()
-        for block_id in self.longest_chain:
-            if block_id == "Block_0":
-                continue        
-            self.included_txn = self.included_txn|set(self.blockchain[block_id].transactions)
     
     def update_txn_list(self,block):
-        self.txn_list = self.txn_list|set(block.transactions)
-        to_discard = set()
-        for txn in self.txn_list:
-            if int(txn[4:]) < 0:
-                to_discard.add(txn)
-        self.txn_list-=to_discard
-
+        self.txn_list = self.txn_list | set(block.transactions[:-1])
 
     # VERIFIED
     # Function to update the transaction pool
     # Transaction list and included TXN need to be updated first - which has been done
     def update_txn_pool(self):
         txn_pool = set()
+        included_txn = self.find_parent_txns(self.mining_at_block)
+        included_txn.extend(self.mining_at_block.transactions[:-1])
         for txn in self.txn_list:
-            if txn not in self.included_txn:
+            if txn not in included_txn:
                 txn_pool.add(txn)
         self.txn_pool = txn_pool
-
-########################################################################################################################################
-    # The following function will be used at the time of creating and forwarding TXNs
-
-    # VERIFIED
-    # Adding a transaction to the list of transactions
-    def add_txn(self, txn_id):  
-        if txn_id not in self.txn_list:
-            self.txn_list.add(txn_id)
-            self.txn_pool.add(txn_id)
-        else:
-            print(f"{self.pid} says {txn_id} is already in the list of transactions")
-
+    
 ########################################################################################################################################
     # The following function will be used when node is trying to create new block
 
     # VERIFIED
     # Get TXN from the TXN pool which are not yet included in any block that the node has heard
     def get_TXN_to_include(self):
-        print("TXN POOL:",self.txn_pool)
-
+        self.update_txn_pool()
         # Return false if TXN pool is empty
         if not self.txn_pool:
-            print("NO TXNs to include")
-            return False
-        
+            # print("NO TXNs to include")
+            return []
         # Choose a random number of TXN between [1,min(999, size of TXN pool)]
         if len(self.txn_pool) > 999:
             upper_limit = 999 # Upper limit is 999 + mining fee TXN + empty block (1 KB) + rest TXNs (999 KB)
         else:
             upper_limit = len(self.txn_pool)
-        num_txn_to_mine = random.randint(1,upper_limit) # Number of transactions to be included in the block
-        txn_to_mine = random.sample(self.txn_list,num_txn_to_mine) # Transactions to be included in the block
-        print("TXN to include: ",num_txn_to_mine)
+        num_txn_to_mine = random.randint(int(upper_limit*0.9),upper_limit) # Number of transactions to be included in the block
+        txn_to_mine = random.sample(list(self.txn_pool),num_txn_to_mine) # Transactions to be included in the block
         return txn_to_mine
 
     # VERIFIED
@@ -231,8 +207,7 @@ class Node:
     # If the TXns are invalid, then the balances of at least one node will be negative 
     # Other nodes will check the balances and 
     def update_balances(self,simulator,block):
-        # Updating the normal TXNs balances 
-        print(block.transactions)
+        # Updating the normal TXNs balances
         for txn_id in block.transactions[:-1]:
             txn = simulator.global_transactions[txn_id]
             block.balances[txn.sender_id]-=txn.amount
@@ -259,7 +234,7 @@ class Node:
         # Print the graph
         color_map = []
         for node in G:
-            if self.blockchain[node].creator_id == 0:
+            if self.blockchain[node].creator_id == 0 :
                 color_map.append('red')
             else: 
                 color_map.append('green')     
@@ -303,12 +278,12 @@ class Node:
 # Testing the code
 if __name__ == "__main__":
     N = Node(1, {"cpu": "low", "speed": "high","hashing_power" : 0.1, "I":0.3},100)
-    N.add_block(Block(1, "Block_0", 0, ["txn_1", "txn_2"],14,[100,100],1,0))
-    N.add_block(Block(2, "Block_0", 1,["txn_3", "txn_4"],14,[100,100],2,0))
-    N.add_block(Block(3, "Block_1", 2,  ["txn_5", "txn_6"],14,[100,100],3,0))
+    N.add_block(Block(1, "Block_0", 0, ["txn_1", "txn_2"],[100,100],1,0))
+    N.add_block(Block(2, "Block_0", 1,["txn_3", "txn_4"],[100,100],2,0))
+    N.add_block(Block(3, "Block_1", 2,  ["txn_5", "txn_6"],[100,100],3,0))
     print(N.blockchain_tree)
     print(N.find_longest_chain())
-    print(f"Maximum length: {N.max_len}")
+    print(f"Maximum length: {N.public_max_len}")
     print(N.included_txn)
     print(N.txn_list)
     N.add_txn("txn_3")
