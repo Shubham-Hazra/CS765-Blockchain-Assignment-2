@@ -43,7 +43,7 @@ class Simulator:
         self.env.run(until = self.max_time)
 
     # VERIFIED
-    def print_blockchains(self,num = 4):
+    def print_blockchains(self,num = 4,normal = False):
         num = min(num,self.N.num_nodes-1)
         for node in self.N.nodes[0:num]:
             node.print_blockchain()

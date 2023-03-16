@@ -247,7 +247,7 @@ class Node:
     # Following function will be used at the end to print the blockchain (tree form) of the node
     
     # VERIFIED
-    def print_blockchain(self):
+    def print_blockchain(self,normal = False):
         dict_ = self.blockchain_tree.copy()
         G = nx.Graph()
         for key, value in dict_.items():
@@ -260,7 +260,7 @@ class Node:
         # Print the graph
         color_map = []
         for node in G:
-            if self.blockchain[node].creator_id == 0:
+            if self.blockchain[node].creator_id == 0 and normal == False:
                 color_map.append('red')
             else: 
                 color_map.append('green')     
@@ -281,7 +281,7 @@ class Node:
             tree.create_node(block+"_"+str(self.blockchain_tree[block]["time"]),block+"_"+str(self.blockchain_tree[block]["time"]), parent = self.blockchain_tree[block]['parent']+"_"+str(self.blockchain_tree[self.blockchain_tree[block]['parent']]["time"]))
         tree.show()
 
-    def dump_networkx_graph(self): # Dumping the networkx graph object
+    def dump_networkx_graph(self,normal=False): # Dumping the networkx graph object
         filename = "networkx_graph/"+str(self.pid)+".png"
         G = nx.Graph()
         for key, value in self.blockchain_tree.items():
@@ -290,8 +290,15 @@ class Node:
                 G.add_edge(key, value['parent'])
             else:
                 G.add_node(key)
+                # Print the graph
+        color_map = []
+        for node in G:
+            if self.blockchain[node].creator_id == 0 and normal == False:
+                color_map.append('red')
+            else: 
+                color_map.append('green') 
         plt.figure(figsize=(10, 10))
-        nx.draw(G, with_labels=True)
+        nx.draw(G,node_color=color_map, with_labels=True)
         plt.savefig(filename, format="PNG")
         plt.close()
         
