@@ -89,7 +89,7 @@ def mine_block(simulator,node):
                 print("-------------------------------------------------------------------------------------------------")
                 print("Another node mined a block before node {} at time {}".format(node.pid,env.now))
             print("-------------------------------------------------------------------------------------------------")
-        else:
+        elif node.simulator_type == 1:
             yield env.timeout(pow_time)
             prev_block = node.mining_at_block
             balances = deepcopy(prev_block.balances)
@@ -107,6 +107,8 @@ def mine_block(simulator,node):
                     forward_block(simulator,block,node,received_list)
                     node.state_0_dash = False
                     node.lead = 0
+        elif node.simulator_type == 2:
+            pass
 
 
 def forward_block(simulator,block,node,received_list):
