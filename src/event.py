@@ -163,18 +163,4 @@ def receive_block(simulator,block,node,latency,received_list):
         elif node.simulation_type == 2:
             pass
 
-
-def release_blocks(simulator,node,new_lead,prev_lead):
-    env = simulator.env
-    block = node.mining_at_block
-    lead=1
-    while (lead <= prev_lead):
-        if lead > new_lead:
-            for l in node.peers:
-                received_list = [False]*simulator.N.num_nodes 
-                received_list[node.pid] = True
-                forward_block(simulator,block,node,received_list)
-        block  = block.parent_ptr
-        lead = lead+1 
-
     
