@@ -92,8 +92,11 @@ def mine_block(simulator,node):
             if simulator.print:
                 print("-------------------------------------------------------------------------------------------------")
         elif node.simulation_type == 1:
-            yield env.timeout(pow_time)
             prev_block = node.mining_at_block
+            yield env.timeout(pow_time)
+            if (node.mining_at_block.block_id != prev_block.block_id):
+                continue
+            # prev_block = node.mining_at_block
             balances = deepcopy(prev_block.balances)
             block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,[],balances,prev_block.length+1)
             if simulator.print:
@@ -112,7 +115,10 @@ def mine_block(simulator,node):
                     node.state_0_dash = False
                     node.lead = 0
         elif node.simulation_type == 2:
+            prev_block = node.mining_at_block
             yield env.timeout(pow_time)
+            if (node.mining_at_block.block_id != prev_block.block_id):
+                continue
             prev_block = node.mining_at_block
             balances = deepcopy(prev_block.balances)
             block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,[],balances,prev_block.length+1)
