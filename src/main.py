@@ -7,7 +7,7 @@ from simulate import Simulator
 
 # Take command line arguments
 cli = argparse.ArgumentParser() # Command line interface
-cli.add_argument("-n","--nodes", type=int, default=20, help="Number of nodes") # Number of nodes
+cli.add_argument("-n","--nodes", type=int, default=25, help="Number of nodes") # Number of nodes
 cli.add_argument("-z","--zeta", type=int, default=50, help="Percentage of nodes the adversary is connected to") # Percentage of nodes the adversary is connected to
 cli.add_argument("-z0","--low_cpu", type=float, default=0, help="Percentage of slow nodes") # Percentage of slow nodes
 cli.add_argument("-z1","--low_speed", type=float, default=0, help="Percentage of low CPU nodes") # Percentage of low CPU nodes
@@ -79,7 +79,7 @@ print(f"Total adversary blocks: {total_adversary_blocks}")
 print(f"Total blocks in longest chain: {blocks_in_longest_chain}")
 print(f"Adversary blocks in longest chain: {adversary_blocks_in_longest_chain}")
 
-print(f"Percentage of adversary blocks: {total_adversary_blocks/total_blocks}")
+print(f"Percentage of adversary blocks overall: {total_adversary_blocks/total_blocks}")
 
 print(f"Percentage of adversary blocks in longest chain: {adversary_blocks_in_longest_chain/blocks_in_longest_chain}")
 
