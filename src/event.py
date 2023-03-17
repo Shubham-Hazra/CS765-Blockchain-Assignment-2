@@ -96,7 +96,6 @@ def mine_block(simulator,node):
             yield env.timeout(pow_time)
             if (node.mining_at_block.block_id != prev_block.block_id):
                 continue
-            # prev_block = node.mining_at_block
             balances = deepcopy(prev_block.balances)
             block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,[],balances,prev_block.length+1)
             if simulator.print:
