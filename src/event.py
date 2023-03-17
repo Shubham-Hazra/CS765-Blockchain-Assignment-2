@@ -65,16 +65,18 @@ def mine_block(simulator,node):
         if node.is_adversary == False:
             if (len(txns_to_include) < 2):
                 yield env.timeout(pow_time)
-                print("-------------------------------------------------------------------------------------------------")
-                print("Node {} did not have any TXNs to include at time {}".format(node.pid,env.now))
+                if simulator.print:
+                    print("-------------------------------------------------------------------------------------------------")
+                    print("Node {} did not have any TXNs to include at time {}".format(node.pid,env.now))
                 continue
             prev_block = node.mining_at_block
             balances = deepcopy(prev_block.balances)
             yield env.timeout(pow_time)
             if (node.mining_at_block.block_id == prev_block.block_id):
-                print("-------------------------------------------------------------------------------------------------")
                 block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,txns_to_include,balances,prev_block.length+1)
-                print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
+                if simulator.print:
+                    print("-------------------------------------------------------------------------------------------------")
+                    print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
                 node.update_balances(simulator,block)
                 simulator.block_id += 1
                 valid = node.add_block(simulator,block)
@@ -86,21 +88,25 @@ def mine_block(simulator,node):
                 received_list[node.pid] = True
                 forward_block(simulator,block,node,received_list)
             else:
+                if simulator.print:
+                    print("-------------------------------------------------------------------------------------------------")
+                    print("Another node mined a block before node {} at time {}".format(node.pid,env.now))
+            if simulator.print:
                 print("-------------------------------------------------------------------------------------------------")
-                print("Another node mined a block before node {} at time {}".format(node.pid,env.now))
-            print("-------------------------------------------------------------------------------------------------")
         elif node.simulation_type == 1:
             yield env.timeout(pow_time)
             prev_block = node.mining_at_block
             balances = deepcopy(prev_block.balances)
             block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,[],balances,prev_block.length+1)
-            print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
+            if simulator.print:
+                print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
             simulator.block_id += 1
             node.add_to_private_blockchain(simulator,block)
             node.blocksReceiveTime.append(f"{block.block_id}_{env.now}")
             simulator.global_Blocks[block.block_id] = block
             if node.state_0_dash == True:
-                    print(f"Released {block.block_id} Immediately at time {env.now} with lead {node.lead} and length {block.length}")
+                    if simulator.print:
+                        print(f"Released {block.block_id} Immediately at time {env.now} with lead {node.lead} and length {block.length}")
                     received_list = [False]*simulator.N.num_nodes 
                     received_list[node.pid] = True
                     node.private_blockchain.pop(0)
@@ -112,13 +118,15 @@ def mine_block(simulator,node):
             prev_block = node.mining_at_block
             balances = deepcopy(prev_block.balances)
             block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,[],balances,prev_block.length+1)
-            print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
+            if simulator.print:
+                print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
             simulator.block_id += 1
             node.add_to_private_blockchain(simulator,block)
             node.blocksReceiveTime.append(f"{block.block_id}_{env.now}")
             simulator.global_Blocks[block.block_id] = block
             if node.state_0_dash == True:
-                    print(f"Transitioning to lead {node.lead} at time {env.now} with length {block.length}")
+                    if simulator.print:
+                        print(f"Transitioning to lead {node.lead} at time {env.now} with length {block.length}")
                     node.state_0_dash = False
                     node.lead = 1
 
@@ -136,26 +144,29 @@ def forward_block(simulator,block,node,received_list):
 def receive_block(simulator,block,node,latency,received_list):
     env = simulator.env
     yield env.timeout(latency)
-    print("-------------------------------------------------------------------------------------------------")
-    print("Node {} received block {} at time {}".format(node.pid,block.block_id,env.now))
+    if simulator.print:
+        print("-------------------------------------------------------------------------------------------------")
+        print("Node {} received block {} at time {}".format(node.pid,block.block_id,env.now))
     added = node.add_block(simulator,block)
     node.blocksReceiveTime.append(f"{block.block_id}: {env.now}")
-    print("-------------------------------------------------------------------------------------------------")
+    if simulator.print:
+        print("-------------------------------------------------------------------------------------------------")
     if node.is_adversary == False:
         if added:
             forward_block(simulator,block,node,received_list)
         else:
-            print("-------------------------------------------------------------------------------------------------")
-            print("Node {} received an invalid block {} at time {}".format(node.pid,block.block_id,env.now))
-            print("-------------------------------------------------------------------------------------------------")  
+            if simulator.print:
+                print("-------------------------------------------------------------------------------------------------")
+                print("Node {} received an invalid block {} at time {}".format(node.pid,block.block_id,env.now))
+                print("-------------------------------------------------------------------------------------------------")  
 
     else:
         if node.simulation_type == 1: 
             if node.lead == 0 and len(node.private_blockchain) > 0:
-                print(len(node.private_blockchain))
                 adv_block = node.private_blockchain.pop(0)
-                print("Reached 0' state after making block {} at time {}".format(adv_block.block_id,env.now))
-                print("Reached 0' state after receiving block {} at time {}".format(block.block_id,env.now))
+                if simulator.print:
+                    print("Reached 0' state after making block {} at time {}".format(adv_block.block_id,env.now))
+                    print("Reached 0' state after receiving block {} at time {}".format(block.block_id,env.now))
                 node.state_0_dash = True
                 received_list = [False]*simulator.N.num_nodes 
                 received_list[node.pid] = True
@@ -176,10 +187,10 @@ def receive_block(simulator,block,node,latency,received_list):
                 forward_block(simulator,adv_block,node,received_list)
         elif node.simulation_type == 2:
             if node.lead == 0 and len(node.private_blockchain) > 0:
-                print(len(node.private_blockchain))
                 adv_block = node.private_blockchain.pop(0)
-                print("Reached 0' state after making block {} at time {}".format(adv_block.block_id,env.now))
-                print("Reached 0' state after receiving block {} at time {}".format(block.block_id,env.now))
+                if simulator.print:
+                    print("Reached 0' state after making block {} at time {}".format(adv_block.block_id,env.now))
+                    print("Reached 0' state after receiving block {} at time {}".format(block.block_id,env.now))
                 node.state_0_dash = True
                 received_list = [False]*simulator.N.num_nodes 
                 received_list[node.pid] = True

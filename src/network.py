@@ -8,7 +8,7 @@ from node import Node
 
 
 class Network:
-    def __init__(self, num_nodes,zeta,z0,z1,I,simulation_type):
+    def __init__(self, num_nodes,zeta,z0,z1,I,simulation_type,print = False):
         self.num_nodes = num_nodes; # Number of nodes in theconnected graph
         self.zeta = zeta # sets the percentage of nodes to which the adversary is connected to
         self.G = nx.Graph() # Stores the graph of the network
@@ -26,9 +26,9 @@ class Network:
         self.simulation_type = simulation_type # 0 for normal, 1 for adversary, 2 for adversary 
         #-----------------------------------------------------------------------
         if simulation_type == 0:
-            self.nodes = [Node(0, self.attrb[0],num_nodes,False)]+[Node(i, self.attrb[i],num_nodes) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
+            self.nodes = [Node(0, self.attrb[0],num_nodes,False,print)]+[Node(i, self.attrb[i],num_nodes,print) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
         elif simulation_type == 1 or simulation_type == 2:
-            self.nodes = [Node(0, self.attrb[0],num_nodes,True,self.simulation_type)]+[Node(i, self.attrb[i],num_nodes,False,self.simulation_type) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
+            self.nodes = [Node(0, self.attrb[0],num_nodes,True,self.simulation_type,print)]+[Node(i, self.attrb[i],num_nodes,False,self.simulation_type,print) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
     
     def create_graph(self):
 

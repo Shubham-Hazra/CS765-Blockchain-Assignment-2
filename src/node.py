@@ -3,6 +3,7 @@ import json
 import pickle
 import random
 import sys
+from copy import deepcopy
 from queue import Queue
 
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ from block import *
 
 
 class Node:
-    def __init__(self, pid, attrb, num_nodes,is_adversary=False,simulation_type=0):
+    def __init__(self, pid, attrb, num_nodes,is_adversary=False,simulation_type=0,print = False):
         self.pid = pid  # Unique Id of the peer
         self.cpu = attrb['cpu']  # CPU speed of the peer
         self.hashing_power = attrb['hashing_power']  # Hashing power of the peer
@@ -22,6 +23,7 @@ class Node:
         self.balance = 100  # Balance of the peer
         self.is_adversary = is_adversary  # True if the peer is an adversary
         self.simulation_type = simulation_type  # 0 for normal, 1 for adversary, 2 for adversary
+        self.print = print
         #------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.blockchain_tree = {"Block_0": {"parent": None, "time":0}} # Blockchain tree of the peer
         self.blockchain = {"Block_0":Block(0,None,None,0,[],[100]*num_nodes,0)}  # Blockchain of the peer - stores the block objects, Initially the genesis block is added
@@ -41,6 +43,7 @@ class Node:
         #---------------------------------------------------------------------------------------------------------------------------------------------------------------------
         self.private_blockchain = []
         self.private_blockchain_tree = {"Block_0": {"parent": None, "time":0}}
+        self.progress = [{"Block_0": {"parent": None, "time":0}}]
 ######################################################################################################################################################
     # Functions for the adversary
     def add_to_private_blockchain(self, simulator, block):
@@ -97,10 +100,14 @@ class Node:
                     if block.creator_id != 0:
                         self.balance = self.blockchain[block.block_id].balances[self.pid] # Updating the balance of the peer
                     self.update_txn_pool() # Updating the list of transactions that the peer can include in a block
-                print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
+                if self.print:
+                    print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
+                if self.pid == 1:
+                    self.progress.append(deepcopy(self.blockchain_tree))
                 return True
             else:
-                print(f"{self.pid} says {block.block_id} is invalid")
+                if self.print:
+                    print(f"{self.pid} says {block.block_id} is invalid")
                 return False
         elif self.pid == 0:
             if self.validate_block(simulator, block):
@@ -114,18 +121,23 @@ class Node:
                         self.mining_at_block = block
                         self.private_len = self.blockchain[block.block_id].length # Updating the length of the longest private chain
                         self.balance = self.blockchain[block.block_id].balances[self.pid] # Updating the balance of the peer
-                        print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
+                        if self.print:
+                            print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
                     self.lead = self.private_len - self.public_max_len # Updating the lead of the adversary
+                    self.progress.append(deepcopy(self.blockchain_tree))
                     return True
                 if self.blockchain[block.block_id].length >= self.public_max_len: # Checking if the block is the longest block
                     self.mining_at_block = block
                     self.longest_chain = self.find_longest_chain() # Updating the longest chain
                 self.private_len = self.blockchain[block.block_id].length # Updating the length of the longest private chain
                 self.lead = self.private_len - self.public_max_len # Updating the lead of the adversary
-                print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
+                if self.print:
+                    print(f"{self.pid} says {block.block_id} is valid and added to its blockchain")
+                self.progress.append(deepcopy(self.blockchain_tree))
                 return True
             else:
-                print(f"{self.pid} says {block.block_id} is invalid")
+                if self.print:
+                    print(f"{self.pid} says {block.block_id} is invalid")
                 return False
 
     # VERIFIED
@@ -139,14 +151,16 @@ class Node:
         # Checks whether TXNs in the block are there in the main blockchain
         for txn in block.transactions[:-1]:
             if txn in parent_txns: # Checking if the transaction is already included in the blockchain
-                print(self.pid,"says that",txn,"is already there in the chain")
+                if self.print:
+                    print(self.pid,"says that",txn,"is already there in the chain")
                 return False
         
         # Validates the TXNs (balances after the TXN are executed) in the block 
         for txn_id in block.transactions[:-1]:
             txn = simulator.global_transactions[txn_id]
             if block.balances[txn.sender_id]<0: # Checking if the balance of the sender is negative
-                print("Balance of",txn.sender_id,"is negative")
+                if self.print:
+                    print("Balance of",txn.sender_id,"is negative")
                 return False
 
         # If no matching TXNs, (i.e. when it comes out of the loop), then return True
@@ -306,6 +320,30 @@ class Node:
         filename = "blockchain_tree_dict/"+str(self.pid)+".txt"
         with open(filename, 'wb') as f:
             f.write(json.dumps(self.blockchain_tree).encode('utf-8'))
+
+    def dump_progress(self):
+        folder_name = "progress_"+str(self.pid)
+        for i, blockchain_tree in enumerate(self.progress):
+            filename = folder_name+"/" + str(i) + ".png"
+            G = nx.Graph()
+            for key, value in blockchain_tree.items():
+                if value['parent'] is not None:
+                    G.add_node(key)
+                    G.add_edge(key, value['parent'])
+                else:
+                    G.add_node(key)
+                    # Print the graph
+            color_map = []
+            for node in G:
+                if self.blockchain[node].creator_id == 0:
+                    color_map.append('red')
+                else: 
+                    color_map.append('green') 
+            plt.figure(figsize=(10, 10))
+            nx.draw(G,node_color=color_map, with_labels=True)
+            plt.savefig(filename, format="PNG")
+            plt.close()
+
 #############################################################################################################################
 
 # Testing the code
