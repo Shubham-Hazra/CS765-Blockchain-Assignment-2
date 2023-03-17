@@ -32,7 +32,6 @@ def create_transaction(simulator,node):
         receive_list = [False]*simulator.N.num_nodes
         receive_list[node.pid] = True
         forward_transactions(simulator,txn,node,receive_list)
-        # print("Node {} created {} transaction at time {}".format(node.pid,txn.txn_id, env.now))
 
 def forward_transactions(simulator,txn,node,received_list):
     env = simulator.env
@@ -50,7 +49,6 @@ def receive_transactions(simulator,txn,node,latency,received_list):
     txn_set = set()
     txn_set.add(txn.txn_id)
     node.txn_list = node.txn_list | txn_set
-    # print("Node {} received {} at time {}".format(node.pid,txn.txn_id,env.now))
     forward_transactions(simulator,txn,node,received_list)
 
 def mine_block(simulator,node):
@@ -149,6 +147,7 @@ def receive_block(simulator,block,node,latency,received_list):
         print("Node {} received block {} at time {}".format(node.pid,block.block_id,env.now))
     added = node.add_block(simulator,block)
     node.blocksReceiveTime.append(f"{block.block_id}: {env.now}")
+    node.state_0_dash = False
     if simulator.print:
         print("-------------------------------------------------------------------------------------------------")
     if node.is_adversary == False:
@@ -159,7 +158,6 @@ def receive_block(simulator,block,node,latency,received_list):
                 print("-------------------------------------------------------------------------------------------------")
                 print("Node {} received an invalid block {} at time {}".format(node.pid,block.block_id,env.now))
                 print("-------------------------------------------------------------------------------------------------")  
-
     else:
         if node.simulation_type == 1: 
             if node.lead == 0 and len(node.private_blockchain) > 0:
