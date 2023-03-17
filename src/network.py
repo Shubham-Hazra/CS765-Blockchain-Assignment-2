@@ -8,9 +8,11 @@ from node import Node
 
 
 class Network:
-    def __init__(self, num_nodes,zeta,z0,z1,I,simulation_type,print = False):
+    def __init__(self, num_nodes,zeta,z0,z1,I,simulation_type,print = False,adversary_hashing = -1):
         self.num_nodes = num_nodes; # Number of nodes in theconnected graph
         self.zeta = zeta # sets the percentage of nodes to which the adversary is connected to
+        self.simulation_type = simulation_type # 0 for normal, 1 for adversary, 2 for adversary 
+        self.adversary_hashing = adversary_hashing # Sets the hashing power of the adversary
         self.G = nx.Graph() # Stores the graph of the network
         self.adj = {} # Stores the dictionary of lists for storing the graph of the network
         self.create_graph() # create the P2P Network
@@ -21,9 +23,8 @@ class Network:
         self.calc_cpu(z1) # Sets z1 percent of nodes as low CPU
         self.set_attrb() # Sets the attributes of the nodes
         #-----------------------------------------------------------------------
-        self.set_hashing_power(z1,I) # Sets the hashing power of the network
+        self.set_hashing_power(z1,I,self.adversary_hashing) # Sets the hashing power of the network
         self.set_static_latency() # Sets the latency of the network
-        self.simulation_type = simulation_type # 0 for normal, 1 for adversary, 2 for adversary 
         #-----------------------------------------------------------------------
         if simulation_type == 0:
             self.nodes = [Node(0, self.attrb[0],num_nodes,False,print)]+[Node(i, self.attrb[i],num_nodes,print) for i in range(1,self.num_nodes)] # Array of Node objects which have operations defined in them
@@ -92,9 +93,9 @@ class Network:
 
     # VERIFIED
     def calc_cpu(self, z): # Sets z percent of nodes as low CPU 
-        z = int(z*self.num_nodes/100.0)
-        low_cpu = random.sample(list(range(self.num_nodes)), z) # Maintains a list of nodes whose CPU is set to low
-        
+        z = int(z*(self.num_nodes-1)/100.0)
+        low_cpu = random.sample(list(range(1,self.num_nodes)), z) # Maintains a list of nodes whose CPU is set to low
+        self.attrb[0]['cpu'] = 'high'
         for i in range(self.num_nodes):
             if i in low_cpu:
                 self.attrb[i]['cpu'] = 'low'
@@ -103,12 +104,12 @@ class Network:
 
     # VERIFIED
     def calc_speed(self, z): # Sets z percent of nodes to low speed ("slow")
-        z = int(z*self.num_nodes/100.0)
+        z = int(z*(self.num_nodes)/100.0)
         low_speed = random.sample(list(range(self.num_nodes)), z) # Maintains a list of nodes whose CPU is set to low
-        
         for i in range(self.num_nodes):
-            if i == 0:
+            if i == 0 and self.simulation_type != 0:
                 self.attrb[i]['speed'] = 'high'
+                continue
             if i in low_speed:
                 self.attrb[i]['speed'] = 'low'
             else:
@@ -136,20 +137,28 @@ class Network:
         return self.G[node1][node2]['p'] + packet_size/self.G[node1][node2]['c'] + random.expovariate((self.G[node1][node2]['c']*1000)/96) # Queueing delay at node 1
 
     # VERIFIED
-    def set_hashing_power(self,z, I):
+    def set_hashing_power(self,z, I,adversary_hashing = -1):
         for i in range(self.num_nodes): # Sets the I value for all the nodes of the network
             self.attrb[i]['I'] = I
-
-        k = int(z*self.num_nodes/100.0)
-        hashing_power = 1/(k + 10*(self.num_nodes - k))
-        for i in range(self.num_nodes):
-            if i == 0:
-                self.attrb[i]['hashing_power'] = hashing_power*15
-                continue
-            if self.attrb[i]['cpu'] == 'low':
-                self.attrb[i]['hashing_power'] = hashing_power
-            else:
-                self.attrb[i]['hashing_power'] = hashing_power*10
+        if adversary_hashing == -1:
+            k = int(z*self.num_nodes/100.0)
+            hashing_power = 1/(k + 10*(self.num_nodes - k))
+            for i in range(self.num_nodes):
+                if self.attrb[i]['cpu'] == 'low':
+                    self.attrb[i]['hashing_power'] = hashing_power
+                else:
+                    self.attrb[i]['hashing_power'] = hashing_power*10
+        else:
+            k = int(z*(self.num_nodes-1)/100.0)
+            hashing_power = (1-(adversary_hashing/100))/(k + 10*((self.num_nodes-1) - k))
+            for i in range(self.num_nodes):
+                if i == 0:
+                    self.attrb[0]['hashing_power'] = adversary_hashing/100
+                    continue
+                if self.attrb[i]['cpu'] == 'low':
+                    self.attrb[i]['hashing_power'] = hashing_power
+                else:
+                    self.attrb[i]['hashing_power'] = hashing_power*10
 
 # Testing the class
 if __name__ == "__main__":

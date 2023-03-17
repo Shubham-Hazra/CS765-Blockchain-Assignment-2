@@ -1,5 +1,6 @@
 import argparse
 import os
+import random
 import shutil
 
 from simulate import Simulator
@@ -19,13 +20,14 @@ cli.add_argument("-d","--dump", action='store_true', help="Dump the blockchain t
 cli.add_argument("--normal", action='store_true', help="Run the simulation with normal nodes") # Run the simulation with normal nodes
 cli.add_argument("-s","--show_progress", action='store_true', help="Show the progression with time")
 cli.add_argument("-p","--print", action='store_true', help="Prints the output to the stdout")
+cli.add_argument("-ah","--adversary_hashing", type=int, default=-1, help="The hashing of the adversary") # The hashing of the adversary
 
 args = cli.parse_args() # Parse the arguments
 
 simulation_type = args.type
 
 if __name__ == "__main__":
-    simulator = Simulator(args.nodes,args.zeta,args.low_cpu,args.low_speed, args.Ttx, args.I, args.time, simulation_type ,args.print)
+    simulator = Simulator(args.nodes,args.zeta,args.low_cpu,args.low_speed, args.Ttx, args.I, args.time, simulation_type ,args.print, args.adversary_hashing)
     simulator.run()
     folders = os.listdir()
     if args.visualize:
@@ -55,3 +57,34 @@ if __name__ == "__main__":
         for node in simulator.N.nodes[:2]:
             node.dump_progress()
 ###################################################################################################################################################################### 
+# For analysis
+total_blocks = 0
+total_adversary_blocks = 0
+blocks_in_longest_chain = 0
+adversary_blocks_in_longest_chain = 0
+
+node = random.choice(simulator.N.nodes[1:])
+longest_chain = node.find_longest_chain()
+for block_id, block in node.blockchain.items():
+    total_blocks += 1
+    if block.creator_id == 0:
+        total_adversary_blocks += 1
+    if block_id in longest_chain:
+        blocks_in_longest_chain += 1
+        if block.creator_id == 0:
+            adversary_blocks_in_longest_chain += 1
+
+print(f"Total blocks: {total_blocks}")
+print(f"Total adversary blocks: {total_adversary_blocks}")
+print(f"Total blocks in longest chain: {blocks_in_longest_chain}")
+print(f"Adversary blocks in longest chain: {adversary_blocks_in_longest_chain}")
+
+print(f"Percentage of adversary blocks: {total_adversary_blocks/total_blocks}")
+
+print(f"Percentage of adversary blocks in longest chain: {adversary_blocks_in_longest_chain/blocks_in_longest_chain}")
+
+print("---------------------------------------------------------------------------------------------------------------------------------------------------------------")
+print(f"MPU_node_adv: {adversary_blocks_in_longest_chain/total_adversary_blocks}")
+print("---------------------------------------------------------------------------------------------------------------------------------------------------------------")
+print(f"MPU_node_overall: {blocks_in_longest_chain/total_blocks}")
+print("---------------------------------------------------------------------------------------------------------------------------------------------------------------")

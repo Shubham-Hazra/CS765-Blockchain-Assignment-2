@@ -12,12 +12,12 @@ from network import Network
 
 
 class Simulator:
-    def __init__(self, n,zeta,z0,z1, Ttx, I, max_time, simulation_type,print = False):
+    def __init__(self, n,zeta,z0,z1, Ttx, I, max_time, simulation_type,print = False,adversary_hashing = -1):
         if simulation_type == 0:
             self.z0 = z0 # Percentage of slow nodes
         else:
             self.z0 = 50 # Percentage of slow nodes for selfish and stubborn mining
-        self.N = Network(n,zeta,self.z0,z1,I,simulation_type,print) # Create the network
+        self.N = Network(n,zeta,self.z0,z1,I,simulation_type,print,adversary_hashing) # Create the network
         self.z1 = z1 # Percentage of low CPU nodes
         self.Ttx = Ttx # Mean transaction interarrival time
         self.I = I # Mean block interarrival time
