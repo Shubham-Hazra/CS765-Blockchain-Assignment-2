@@ -44,23 +44,23 @@ This aim of this assignment is to build a discrete-event simulator for a P2P cry
   - Dumps the blockchain trees into folders
 
 # Instructions to run
-In the source directory run `python3 main.py -n [nodes] -z [zeta] -z0 [low_cpu] -z1 [low_speed] -T [Ttx] -I [interarrival_block] -t [time] --type [type] -v -d -s -p` \
-For eg: `python3 main.py -n 35 -z 70 -z0 10 -z1 40 -T 10 -I 6 -t 4000 --type 1 -v -d -s -p` \
+In the source directory run `python3 main.py -n [nodes] -z [zeta] -z0 [low_cpu] -z1 [low_speed] -T [Ttx] -I [interarrival_block] -t [time] --type [type] -v -d -s -p -a [adversary_hashing]` \
+For eg: `python3 main.py -n 35 -z 70 -z0 10 -z1 40 -T 10 -I 6 -t 4000 --type 1 -v -d -s -p -a 10` \
 The commandline argument options are as follows:
-- `-n` : Number of nodes/peers (Use number of nodes to be $\geq 15$ to be safe) (defaults to 25)
-- `-z` : Percentage of nodes the adversary is connected to (defaults to 50)
-- `-z0` : Percentage of slow nodes (defaults to 0)
-- `-z1` : Percentage of low CPU nodes (defaults to 0)
-- `-Ttx` : Mean transaction interarrival time (defaults to 10)
-- `-I` : Mean block interarrival time (defaults  to 4)
-- `-t` : The amount of time to run the simulation for (defaults to 1000)
-- `-type` : The type of simulation to run. 0 for normal simulation, 1 for selfish mining and 2 for stubborn mining (defaults to 0)
-- `-v` : To see the blockchain tree for the first five nodes (stores False)
-- `-d` : To dump the blockchain tree and the networkx graph (stores False)
+- `-n or --nodes` : Number of nodes/peers (Use number of nodes to be $\geq 15$ to be safe) (defaults to 25)
+- `-z or --zeta` : Percentage of nodes the adversary is connected to (defaults to 50)
+- `-z0 or --low_cpu` : Percentage of slow nodes (defaults to 0)
+- `-z1 or --low_speed` : Percentage of low CPU nodes (defaults to 0)
+- `-T or --Ttx` : Mean transaction interarrival time (defaults to 10)
+- `-I or --interarrival_block` : Mean block interarrival time (defaults  to 4)
+- `-t or --time` : The amount of time to run the simulation for (defaults to 1000)
+- `--type` : The type of simulation to run. 0 for normal simulation, 1 for selfish mining and 2 for stubborn mining (defaults to 0)
+- `-v or --visualize` : To see the blockchain tree for the first five nodes (stores False)
+- `-d or --dump` : To dump the blockchain tree and the networkx graph (stores False)
 - `--normal` : To run a normal simulation (stores False)
-- `-s` : To save the progress of the blockchain for node 0 and node 1.
-- `-p` : To print the progress of the simulation to the terminal (stores False)
-- `-a` : The percentage of hash power the adversary has
+- `-s or --save_progress` : To save the progress of the blockchain for node 0 and node 1.
+- `-p or --print` : To print the progress of the simulation to the terminal (stores False)
+- `-a or --adversary_hashing` : The percentage of hash power the adversary has
 
 
 After all the steps are completed, the blockchain tree, blockchain tree dictionary and the networkx graph converted to PNGs are saved to the directories blockchain_tree, blockchain_tree_dict and networkx_graph respectively. \

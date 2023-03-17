@@ -18,7 +18,7 @@ cli.add_argument("--type",type = int , default = 0, help = "Type of simulation t
 cli.add_argument("-v","--visualize", action='store_true', help="Visualize the blockchain tree") # Visualize the blockchain tree
 cli.add_argument("-d","--dump", action='store_true', help="Dump the blockchain tree") # Dump the blockchain tree
 cli.add_argument("--normal", action='store_true', help="Run the simulation with normal nodes") # Run the simulation with normal nodes
-cli.add_argument("-s","--show_progress", action='store_true', help="Show the progression with time")
+cli.add_argument("-s","--save_progress", action='store_true', help="Show the progression with time")
 cli.add_argument("-p","--print", action='store_true', help="Prints the output to the stdout")
 cli.add_argument("-a","--adversary_hashing", type=int, default=-1, help="The hashing of the adversary") # The hashing of the adversary
 
@@ -47,7 +47,7 @@ def main():
             node.dump_blockchain_tree()
             node.dump_networkx_graph(args.normal)
 ######################################################################################################################################################################
-    if args.show_progress:
+    if args.save_progress:
         print("Dumping the progressions. This step may take a while...")
         if 'progress_0' in folders:
             shutil.rmtree('progress_0')
