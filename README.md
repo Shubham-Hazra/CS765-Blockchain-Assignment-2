@@ -25,10 +25,12 @@ This aim of this assignment is to build a discrete-event simulator for a P2P cry
   - Simulates transaction generation and PoW delays
 
 - `event.py`         - Models 4 types of events
-  - CreateTXN - This event is responsible for creating transactions
-  - ReceiveTXN - This event is responsible for forwarding transactions to its neighbors
-  - MineBlock - This event is responsible for mining a block
-  - ForwardBlock - This event is responsible for listening for forwarding blocks to its neighbors
+  - create_transaction - This event is responsible for creating transactions
+  - receive_transactions - This event is responsible for receiving transactions to its neighbors
+  - forward_transactions - This event is responsible for forwarding transactions to its neighbors
+  - mine_block - This event is responsible for mining a block
+  - forward_block - This event is responsible for listening for forwarding blocks to its neighbors
+  - receive_block - This event is responsible for receiving blocks from its neighbors
 
 - `simulate.py`    - Simulates Peers' interaction
   - Generates and simulates the blockchain network
@@ -42,17 +44,27 @@ This aim of this assignment is to build a discrete-event simulator for a P2P cry
   - Dumps the blockchain trees into folders
 
 # Instructions to run
-In the source directory run `python3 main.py --n [n] --z0 [z0] --z1 [z1] --Ttx [Ttx] --I [I] --steps [steps]` \
-For eg: `python3 main.py --n 100 --z0 10 --z1 40 --Ttx 10 --I 60 --steps 100000` \
-Where:
-- `n` : Number of nodes/peers (Use number of nodes to be $\geq 15$ to be safe) (defaults to 50)
-- `z0` : Percentage of slow nodes (defaults to 10)
-- `z1` : Percentage of low CPU nodes (defaults to 40)
-- `Ttx` : Mean transaction interarrival time (defaults to 10)
-- `I` : Mean block interarrival time (defaults  to 60)
-- `steps` : The number of steps to run the simulation for (defaults to 10000)
+In the source directory run `python3 main.py -n [nodes] -z [zeta] -z0 [low_cpu] -z1 [low_speed] -T [Ttx] -I [interarrival_block] -t [time] --type [type] -v -d -s -p` \
+For eg: `python3 main.py -n 35 -z 70 -z0 10 -z1 40 -T 10 -I 6 -t 4000 --type 1 -v -d -s -p` \
+The commandline argument options are as follows:
+- `-n` : Number of nodes/peers (Use number of nodes to be $\geq 15$ to be safe) (defaults to 25)
+- `-z` : Percentage of nodes the adversary is connected to (defaults to 50)
+- `-z0` : Percentage of slow nodes (defaults to 0)
+- `-z1` : Percentage of low CPU nodes (defaults to 0)
+- `-Ttx` : Mean transaction interarrival time (defaults to 10)
+- `-I` : Mean block interarrival time (defaults  to 4)
+- `-t` : The amount of time to run the simulation for (defaults to 1000)
+- `-type` : The type of simulation to run. 0 for normal simulation, 1 for selfish mining and 2 for stubborn mining (defaults to 0)
+- `-v` : To see the blockchain tree for the first five nodes (stores False)
+- `-d` : To dump the blockchain tree and the networkx graph (stores False)
+- `--normal` : To run a normal simulation (stores False)
+- `-s` : To save the progress of the blockchain for node 0 and node 1.
+- `-p` : To print the progress of the simulation to the terminal (stores False)
+- `-a` : The percentage of hash power the adversary has
+
 
 After all the steps are completed, the blockchain tree, blockchain tree dictionary and the networkx graph converted to PNGs are saved to the directories blockchain_tree, blockchain_tree_dict and networkx_graph respectively. \
+Also the progress of the blockchain is saved to the directory progress_0 for node 0 and progress_1 for node 1. \
 The conversion from networkx graphs to PNGs may take a while depending upon the number of nodes. 
 
 NOTE: The .txt files contain Blockchain in the following format Block_\<Block_ID\>_\<Time at which block was received at the node\>
