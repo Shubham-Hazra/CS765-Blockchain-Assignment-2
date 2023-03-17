@@ -26,7 +26,7 @@ args = cli.parse_args() # Parse the arguments
 
 simulation_type = args.type
 
-if __name__ == "__main__":
+def main():
     simulator = Simulator(args.nodes,args.zeta,args.low_cpu,args.low_speed, args.Ttx, args.I, args.time, simulation_type ,args.print, args.adversary_hashing)
     simulator.run()
     folders = os.listdir()
@@ -35,10 +35,10 @@ if __name__ == "__main__":
         simulator.print_blockchains(4,args.normal)
         simulator.visualize()
 ######################################################################################################################################################################    
-        if 'blockchain_tree' in folders:
-            shutil.rmtree('blockchain_tree')
-        if 'networkx_graph' in folders:
-            shutil.rmtree('networkx_graph')
+    if 'blockchain_tree' in folders:
+        shutil.rmtree('blockchain_tree')
+    if 'networkx_graph' in folders:
+        shutil.rmtree('networkx_graph')
         os.mkdir('blockchain_tree')
         os.mkdir('networkx_graph')
     if args.dump:
@@ -46,6 +46,7 @@ if __name__ == "__main__":
         for node in simulator.N.nodes:
             node.dump_blockchain_tree()
             node.dump_networkx_graph(args.normal)
+######################################################################################################################################################################
     if args.show_progress:
         print("Dumping the progressions. This step may take a while...")
         if 'progress_0' in folders:
@@ -57,34 +58,41 @@ if __name__ == "__main__":
         for node in simulator.N.nodes[:2]:
             node.dump_progress()
 ###################################################################################################################################################################### 
-# For analysis
-total_blocks = 0
-total_adversary_blocks = 0
-blocks_in_longest_chain = 0
-adversary_blocks_in_longest_chain = 0
+    # For analysis
+    total_blocks = 0
+    total_adversary_blocks = 0
+    blocks_in_longest_chain = 0
+    adversary_blocks_in_longest_chain = 0
 
-node = random.choice(simulator.N.nodes[1:])
-longest_chain = node.find_longest_chain()
-for block_id, block in node.blockchain.items():
-    total_blocks += 1
-    if block.creator_id == 0:
-        total_adversary_blocks += 1
-    if block_id in longest_chain:
-        blocks_in_longest_chain += 1
+    node = random.choice(simulator.N.nodes[1:])
+    longest_chain = node.find_longest_chain()
+    for block_id, block in node.blockchain.items():
+        total_blocks += 1
         if block.creator_id == 0:
-            adversary_blocks_in_longest_chain += 1
+            total_adversary_blocks += 1
+        if block_id in longest_chain:
+            blocks_in_longest_chain += 1
+            if block.creator_id == 0:
+                adversary_blocks_in_longest_chain += 1
 
-print(f"Total blocks: {total_blocks}")
-print(f"Total adversary blocks: {total_adversary_blocks}")
-print(f"Total blocks in longest chain: {blocks_in_longest_chain}")
-print(f"Adversary blocks in longest chain: {adversary_blocks_in_longest_chain}")
+    print(f"Total blocks: {total_blocks}")
+    print(f"Total adversary blocks: {total_adversary_blocks}")
+    print(f"Total blocks in longest chain: {blocks_in_longest_chain}")
+    print(f"Adversary blocks in longest chain: {adversary_blocks_in_longest_chain}")
 
-print(f"Percentage of adversary blocks overall: {total_adversary_blocks/total_blocks}")
+    print(f"Percentage of adversary blocks overall: {total_adversary_blocks/total_blocks}")
 
-print(f"Percentage of adversary blocks in longest chain: {adversary_blocks_in_longest_chain/blocks_in_longest_chain}")
+    print(f"Percentage of adversary blocks in longest chain: {adversary_blocks_in_longest_chain/blocks_in_longest_chain}")
 
-print("---------------------------------------------------------------------------------------------------------------")
-print(f"MPU_node_adv: {adversary_blocks_in_longest_chain/total_adversary_blocks}")
-print("---------------------------------------------------------------------------------------------------------------")
-print(f"MPU_node_overall: {blocks_in_longest_chain/total_blocks}")
-print("---------------------------------------------------------------------------------------------------------------")
+    print("---------------------------------------------------------------------------------------------------------------")
+    try:
+        print(f"MPU_node_adv: {adversary_blocks_in_longest_chain/total_adversary_blocks}")
+        print("---------------------------------------------------------------------------------------------------------------")
+    except ZeroDivisionError:
+        print("MPU_node_adv: 0")
+        print("---------------------------------------------------------------------------------------------------------------")
+    print(f"MPU_node_overall: {blocks_in_longest_chain/total_blocks}")
+    print("---------------------------------------------------------------------------------------------------------------")
+
+if __name__ == "__main__":
+    main()
