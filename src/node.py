@@ -9,7 +9,9 @@ from queue import Queue
 import matplotlib.pyplot as plt
 import networkx as nx
 from treelib import Tree
-
+import ete3
+from ete3 import TreeStyle, NodeStyle, TextFace, add_face_to_node
+ete3.__file__
 from block import *
 
 
@@ -315,6 +317,52 @@ class Node:
         nx.draw(G,node_color=color_map, with_labels=True)
         plt.savefig(filename, format="PNG")
         plt.close()
+
+
+    def dump_ete3_graph(self,normal=False):
+        filename = "ete3_graph/"+str(self.pid)+".pdf"
+        G = nx.Graph()
+        for key, value in self.blockchain_tree.items():
+            if value['parent'] is not None:
+                G.add_node(key)
+                G.add_edge(key, value['parent'])
+            else:
+                G.add_node(key)
+
+        root = "Block_0"
+        subtrees = {node:ete3.Tree(name=node) for node in G.nodes()}
+        [*map(lambda edge:subtrees[edge[0]].add_child(subtrees[edge[1]]), G.edges())]
+        tree = subtrees[root]
+        # Specify formatting of tree
+        ts = TreeStyle()
+        # Hide leaf labels and scale
+        ts.show_leaf_name = False
+        ts.show_scale=False
+        # Define layout function to label tree nodes
+        def my_layout(node):
+                F = TextFace(node.name, tight_text=True, fsize=12, ftype="Arial")
+                add_face_to_node(F, node, column=0, position="branch-right")
+        # Apply layout function
+        ts.layout_fn = my_layout
+        # Add margin between tree branches
+        ts.branch_vertical_margin = 10
+        # Define a node style to set the size of nodes
+        nstyle = NodeStyle()
+        nstyle["size"] = 10
+        # Iterate through nodes, setting their styles 
+        for node in tree.iter_descendants("postorder"):
+            node.img_style["fgcolor"] = self.get_colour(node.name,normal)
+            node.img_style["size"] = 10
+        # Set style of root node
+        tree.img_style["size"] = 10
+        tree.img_style["fgcolor"] = "#7CFC00"
+        tree.render(filename,layout=None,tree_style=ts,units="px",dpi = 180)
+
+    def get_colour(self,node_id,normal):
+        if self.blockchain[node_id].creator_id == 0 and normal == False:
+            return '#FF0000'
+        else: 
+            return "#7CFC00"
         
     def dump_blockchain_tree_dict(self): # Dumping the blockchain tree dictionary object
         filename = "blockchain_tree_dict/"+str(self.pid)+".txt"
@@ -324,7 +372,7 @@ class Node:
     def dump_progress(self):
         folder_name = "progress_"+str(self.pid)
         for i, blockchain_tree in enumerate(self.progress):
-            filename = folder_name+"/" + str(i) + ".png"
+            filename = folder_name+"/" + str(i) + ".pdf"
             G = nx.Graph()
             for key, value in blockchain_tree.items():
                 if value['parent'] is not None:
@@ -333,16 +381,40 @@ class Node:
                 else:
                     G.add_node(key)
                     # Print the graph
-            color_map = []
-            for node in G:
-                if self.blockchain[node].creator_id == 0:
-                    color_map.append('red')
-                else: 
-                    color_map.append('green') 
-            plt.figure(figsize=(10, 10))
-            nx.draw(G,node_color=color_map, with_labels=True)
-            plt.savefig(filename, format="PNG")
-            plt.close()
+
+            root = "Block_0"
+            subtrees = {node:ete3.Tree(name=node) for node in G.nodes()}
+            [*map(lambda edge:subtrees[edge[0]].add_child(subtrees[edge[1]]), G.edges())]
+            tree = subtrees[root]
+            # Specify formatting of tree
+            ts = TreeStyle()
+            # Hide leaf labels and scale
+            ts.show_leaf_name = False
+            ts.show_scale=False
+            # Define layout function to label tree nodes
+            def my_layout(node):
+                    F = TextFace(node.name, tight_text=True, fsize=12, ftype="Arial")
+                    add_face_to_node(F, node, column=0, position="branch-right")
+            # Apply layout function
+            ts.layout_fn = my_layout
+            # Add margin between tree branches
+            ts.branch_vertical_margin = 10
+            # Define a node style to set the size of nodes
+            nstyle = NodeStyle()
+            nstyle["size"] = 10
+            # Iterate through nodes, setting their styles 
+            for node in tree.iter_descendants("postorder"):
+                node.img_style["fgcolor"] = self.get_colour(node.name,False)
+                node.img_style["size"] = 10
+            # Set style of root node
+            tree.img_style["size"] = 10
+            tree.img_style["fgcolor"] = "#7CFC00"
+            tree.render(filename,layout=None,tree_style=ts,units="px",dpi = 180)
+
+            # plt.figure(figsize=(10, 10))
+            # nx.draw(G,node_color=color_map, with_labels=True)
+            # plt.savefig(filename, format="PNG")
+            # plt.close()
 
 #############################################################################################################################
 

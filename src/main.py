@@ -39,13 +39,19 @@ def main():
         shutil.rmtree('blockchain_tree')
     if 'networkx_graph' in folders:
         shutil.rmtree('networkx_graph')
-        os.mkdir('blockchain_tree')
-        os.mkdir('networkx_graph')
+    if 'ete3_graph' in folders:
+        shutil.rmtree('ete3_graph')
+        
+    os.mkdir('blockchain_tree')
+    os.mkdir('networkx_graph')
+    os.mkdir('ete3_graph')
+
     if args.dump:
         print(f"Converting blockchain tree graphs to png and saving to networkx_graph. This step may take a while...")
         for node in simulator.N.nodes:
             node.dump_blockchain_tree()
             node.dump_networkx_graph(args.normal)
+            node.dump_ete3_graph(args.normal)
 ######################################################################################################################################################################
     if args.save_progress:
         print("Dumping the progressions. This step may take a while...")
