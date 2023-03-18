@@ -356,6 +356,7 @@ class Node:
         # Set style of root node
         tree.img_style["size"] = 10
         tree.img_style["fgcolor"] = "#7CFC00"
+        ts.title.add_face(TextFace("Node "+str(self.pid) +"'s Blockchain", fsize=30, ftype="Arial", fstyle="italic"),column=0)
         tree.render(filename,layout=None,tree_style=ts,units="px",dpi = 180)
 
     def get_colour(self,node_id,normal):
@@ -409,6 +410,8 @@ class Node:
             # Set style of root node
             tree.img_style["size"] = 10
             tree.img_style["fgcolor"] = "#7CFC00"
+            # Add title
+            ts.title.add_face(TextFace("Step: "+ str(i), fsize=30, ftype="Arial", fstyle="italic"),column=0)
             tree.render(filename,layout=None,tree_style=ts,units="px",dpi = 180)
 
             # plt.figure(figsize=(10, 10))
