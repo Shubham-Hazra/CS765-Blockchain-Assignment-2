@@ -64,7 +64,7 @@ The commandline argument options are as follows:
 
 
 After all the steps are completed, the blockchain tree, blockchain tree dictionary and the networkx graph converted to PNGs are saved to the directories blockchain_tree, blockchain_tree_dict and networkx_graph respectively. \
-Also the progress of the blockchain is saved to the directory progress_0 for node 0 and progress_1 for node 1. \
+Also the progress of the blockchain is saved to the directory progress_0 for node 0 (adversary) and progress_1 for node 1 (honest node). \
 The conversion from networkx graphs to PNGs may take a while depending upon the number of nodes. 
 
 NOTE: The .txt files contain Blockchain in the following format Block_\<Block_ID\>_\<Time at which block was received at the node\>
