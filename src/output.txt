@@ -1,0 +1,12 @@
+Dumping the progressions. This step may take a while...
+Total blocks (released or not): 21
+Total adversary blocks: 5
+Total blocks in longest chain: 18
+Adversary blocks in longest chain: 5
+Percentage of adversary blocks overall: 0.23809523809523808
+Percentage of adversary blocks in longest chain: 0.2777777777777778
+---------------------------------------------------------------------------------------------------------------
+MPU_node_adv: 1.0
+---------------------------------------------------------------------------------------------------------------
+MPU_node_overall: 0.8571428571428571
+---------------------------------------------------------------------------------------------------------------

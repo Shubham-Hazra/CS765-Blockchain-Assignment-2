@@ -414,11 +414,6 @@ class Node:
             ts.title.add_face(TextFace("Step: "+ str(i), fsize=30, ftype="Arial", fstyle="italic"),column=0)
             tree.render(filename,layout=None,tree_style=ts,units="px",dpi = 180)
 
-            # plt.figure(figsize=(10, 10))
-            # nx.draw(G,node_color=color_map, with_labels=True)
-            # plt.savefig(filename, format="PNG")
-            # plt.close()
-
 #############################################################################################################################
 
 # Testing the code

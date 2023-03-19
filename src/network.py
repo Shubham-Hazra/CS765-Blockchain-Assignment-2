@@ -163,6 +163,7 @@ class Network:
 # Testing the class
 if __name__ == "__main__":
     N = Network(20,100,10,10,600,1)
+    N.show_graph()
     for nodes in N.nodes:
         print(nodes.hashing_power)
 
