@@ -3,12 +3,12 @@ import sys
 import time
 from copy import deepcopy
 
+import simpy
 import simpy as sp
 
 from block import Block
 from network import Network
 from transaction import Transaction
-import simpy
 
 VALID_RATIO = 0.03
 
@@ -185,13 +185,14 @@ def receive_block(simulator,block,node,latency,received_list):
     node.state_0_dash = False
     if simulator.print:
         print("-------------------------------------------------------------------------------------------------")
-    if node.is_adversary == False:
-        if added:
+    if added:
             # Checks whether the block on which the node was mining has changed or not
             if (node.mining_at_block.block_id != prev_mining_at):
                 # Restart the mining process
-                simulator.node_process[node.pid].interrupt("Another node mined a block before node {} at time {}".format(node.pid,env.now))
+                simulator.node_process[node.pid].interrupt(f"Node {node.pid} restarted mining at time {env.now}")
                 # While loop at another node automatically restarts mining
+    if node.is_adversary == False:
+        if added:
             forward_block(simulator,block,node,received_list)
         else:
             if simulator.print:
