@@ -12,7 +12,7 @@ cli.add_argument("-z","--zeta", type=int, default=50, help="Percentage of nodes 
 cli.add_argument("-z0","--low_cpu", type=float, default=50, help="Percentage of slow nodes") # Percentage of slow nodes
 cli.add_argument("-z1","--low_speed", type=float, default=50, help="Percentage of low CPU nodes") # Percentage of low CPU nodes
 cli.add_argument("-T","--Ttx", type=float, default=10, help="Mean transaction interarrival time") # Mean transaction interarrival time
-cli.add_argument("-I","--interarrival_block", type=float, default=10, help="Mean block interarrival time") # Mean block interarrival time
+cli.add_argument("-I","--interarrival_block", type=float, default=15, help="Mean block interarrival time") # Mean block interarrival time
 cli.add_argument("-t","--time", type=int, default=1000, help="The amount of time to run the simulation for") # The number of steps to run the simulation for
 cli.add_argument("--type",type = int , default = 0, help = "Type of simulation to run. 0 for normal run, 1 for selfish mining and 2 for stubborn mining") # Type of simulation to run
 cli.add_argument("-v","--visualize", action='store_true', help="Visualize the blockchain tree") # Visualize the blockchain tree
