@@ -32,6 +32,7 @@ class Simulator:
         self.global_Blocks = {} 
         self.global_Blocks["Block_0"] = Block(0,None,None,0,[],[100]*self.N.num_nodes,0)
         self.print = print
+        self.node_process = []
         
     # VERIFIED
     def transaction_delay(self):
@@ -40,7 +41,7 @@ class Simulator:
     def run(self):
         for node in self.N.nodes:
             self.env.process(create_transaction(self,node))
-            self.env.process(mine_block(self,node))
+            self.node_process.append(self.env.process(mine_block(self,node)))
         self.env.run(until = self.max_time)
 
     # VERIFIED

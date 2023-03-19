@@ -8,6 +8,7 @@ import simpy as sp
 from block import Block
 from network import Network
 from transaction import Transaction
+import simpy
 
 VALID_RATIO = 0.03
 
@@ -54,6 +55,10 @@ def receive_transactions(simulator,txn,node,latency,received_list):
 def mine_block(simulator,node):
     env = simulator.env
     while True:
+        if simulator.print:
+            print("-------------------------------------------------------------------------------------------------")
+            print("Started mining at Node" , node.pid)
+            print("-------------------------------------------------------------------------------------------------")
         pow_time = node.get_PoW_delay()
         txns_to_include = node.get_TXN_to_include()
         coinbase_txn = Transaction(simulator.txn_id,node.pid,node.pid,50,True)
@@ -62,38 +67,55 @@ def mine_block(simulator,node):
         simulator.txn_id += 1
         if node.is_adversary == False:
             if (len(txns_to_include) < 2):
-                yield env.timeout(pow_time)
+                try:
+                    yield env.timeout(pow_time)
+                except simpy.Interrupt as i:
+                    if simulator.print:
+                        print("-------------------------------------------------------------------------------------------------")
+                        print(i.cause)
+                        print("-------------------------------------------------------------------------------------------------")
+                    continue # Restart the mining process again
                 if simulator.print:
                     print("-------------------------------------------------------------------------------------------------")
                     print("Node {} did not have any TXNs to include at time {}".format(node.pid,env.now))
                 continue
             prev_block = node.mining_at_block
             balances = deepcopy(prev_block.balances)
-            yield env.timeout(pow_time)
-            if (node.mining_at_block.block_id == prev_block.block_id):
-                block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,txns_to_include,balances,prev_block.length+1)
+            try:
+                yield env.timeout(pow_time)
+            except simpy.Interrupt as i:
                 if simulator.print:
-                    print("-------------------------------------------------------------------------------------------------")
-                    print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
-                node.update_balances(simulator,block)
-                simulator.block_id += 1
-                valid = node.add_block(simulator,block)
-                if valid == False:
-                    continue
-                node.blocksReceiveTime.append(f"{block.block_id}_{env.now}")
-                simulator.global_Blocks[block.block_id] = block
-                received_list = [False]*simulator.N.num_nodes 
-                received_list[node.pid] = True
-                forward_block(simulator,block,node,received_list)
-            else:
-                if simulator.print:
-                    print("-------------------------------------------------------------------------------------------------")
-                    print("Another node mined a block before node {} at time {}".format(node.pid,env.now))
+                        print("-------------------------------------------------------------------------------------------------")
+                        print(i.cause)
+                        print("-------------------------------------------------------------------------------------------------")
+                continue # Restart the mining process again
+            block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,txns_to_include,balances,prev_block.length+1)
+            if simulator.print:
+                print("-------------------------------------------------------------------------------------------------")
+                print("Node {} mined {} at time {}".format(node.pid,block.block_id,env.now))
+            node.update_balances(simulator,block)
+            simulator.block_id += 1
+            valid = node.add_block(simulator,block)
+            if valid == False:
+                continue
+            node.blocksReceiveTime.append(f"{block.block_id}_{env.now}")
+            simulator.global_Blocks[block.block_id] = block
+            received_list = [False]*simulator.N.num_nodes 
+            received_list[node.pid] = True
+            forward_block(simulator,block,node,received_list)
             if simulator.print:
                 print("-------------------------------------------------------------------------------------------------")
         elif node.simulation_type == 1:
             prev_block = node.mining_at_block
-            yield env.timeout(pow_time)
+            try:
+                yield env.timeout(pow_time)
+            except simpy.Interrupt as i:
+                if simulator.print:
+                        print("-------------------------------------------------------------------------------------------------")
+                        print(i.cause)
+                        print("-------------------------------------------------------------------------------------------------")
+                continue # Restart the mining process again
+
             if (node.mining_at_block.block_id != prev_block.block_id):
                 continue
             balances = deepcopy(prev_block.balances)
@@ -115,7 +137,14 @@ def mine_block(simulator,node):
                     node.lead = 0
         elif node.simulation_type == 2:
             prev_block = node.mining_at_block
-            yield env.timeout(pow_time)
+            try:
+                yield env.timeout(pow_time)
+            except simpy.Interrupt as i:
+                if simulator.print:
+                        print("-------------------------------------------------------------------------------------------------")
+                        print(i.cause)
+                        print("-------------------------------------------------------------------------------------------------")
+                continue # Restart the mining process again
             if (node.mining_at_block.block_id != prev_block.block_id):
                 continue
             prev_block = node.mining_at_block
@@ -150,6 +179,7 @@ def receive_block(simulator,block,node,latency,received_list):
     if simulator.print:
         print("-------------------------------------------------------------------------------------------------")
         print("Node {} received block {} at time {}".format(node.pid,block.block_id,env.now))
+    prev_mining_at = node.mining_at_block.block_id # The block on  which the node was previously mining at
     added = node.add_block(simulator,block)
     node.blocksReceiveTime.append(f"{block.block_id}: {env.now}")
     node.state_0_dash = False
@@ -157,6 +187,11 @@ def receive_block(simulator,block,node,latency,received_list):
         print("-------------------------------------------------------------------------------------------------")
     if node.is_adversary == False:
         if added:
+            # Checks whether the block on which the node was mining has changed or not
+            if (node.mining_at_block.block_id != prev_mining_at):
+                # Restart the mining process
+                simulator.node_process[node.pid].interrupt("Another node mined a block before node {} at time {}".format(node.pid,env.now))
+                # While loop at another node automatically restarts mining
             forward_block(simulator,block,node,received_list)
         else:
             if simulator.print:
