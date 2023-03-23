@@ -35,7 +35,6 @@ def main():
     adv_node = simulator.N.nodes[0]
     for i in range(0,len(adv_node.private_blockchain)):
         block = adv_node.private_blockchain.pop(0)
-        print(f"Block {block.block_id} released")
         received_list = [False]*simulator.N.num_nodes 
         received_list[0] = True
         forward_block(simulator,block,adv_node,received_list)
