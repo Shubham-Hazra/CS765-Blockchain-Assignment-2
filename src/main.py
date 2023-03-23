@@ -35,6 +35,8 @@ def main():
     adv_node = simulator.N.nodes[0]
     for i in range(0,len(adv_node.private_blockchain)):
         block = adv_node.private_blockchain.pop(0)
+        if args.print:
+            print(f"Releasing adversary's block after end of simulation: {block.block_id}")
         received_list = [False]*simulator.N.num_nodes 
         received_list[0] = True
         forward_block(simulator,block,adv_node,received_list)
