@@ -13,9 +13,11 @@ from transaction import Transaction
 VALID_RATIO = 0.03
 
 def create_transaction(simulator,node):
+    env = simulator.env
     while True:
+        if env.now > simulator.max_time:
+            return
         txn_gen_delay = simulator.transaction_delay()
-        env = simulator.env
         yield env.timeout(txn_gen_delay)
         random_node = random.randint(0, simulator.N.num_nodes - 1)
         while (random_node == node.pid):
@@ -89,6 +91,8 @@ def mine_block(simulator,node):
                         print(i.cause)
                         print("-------------------------------------------------------------------------------------------------")
                 continue # Restart the mining process again
+            if env.now > simulator.max_time:
+                return
             block = Block(simulator.block_id,node.pid,prev_block.block_id,env.now,txns_to_include,balances,prev_block.length+1)
             if simulator.print:
                 print("-------------------------------------------------------------------------------------------------")
@@ -115,7 +119,8 @@ def mine_block(simulator,node):
                         print(i.cause)
                         print("-------------------------------------------------------------------------------------------------")
                 continue # Restart the mining process again
-
+            if env.now > simulator.max_time:
+                return
             if (node.mining_at_block.block_id != prev_block.block_id):
                 continue
             balances = deepcopy(prev_block.balances)
@@ -145,6 +150,8 @@ def mine_block(simulator,node):
                         print(i.cause)
                         print("-------------------------------------------------------------------------------------------------")
                 continue # Restart the mining process again
+            if env.now > simulator.max_time:
+                return
             if (node.mining_at_block.block_id != prev_block.block_id):
                 continue
             prev_block = node.mining_at_block
@@ -181,6 +188,9 @@ def receive_block(simulator,block,node,latency,received_list):
         print("Node {} received block {} at time {}".format(node.pid,block.block_id,env.now))
     prev_mining_at = node.mining_at_block.block_id # The block on  which the node was previously mining at
     added = node.add_block(simulator,block)
+    if env.now > simulator.max_time:
+        forward_block(simulator,block,node,received_list)
+        return
     node.blocksReceiveTime.append(f"{block.block_id}: {env.now}")
     node.state_0_dash = False
     if simulator.print:
