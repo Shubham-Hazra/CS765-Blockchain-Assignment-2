@@ -86,15 +86,14 @@ def main():
     node = simulator.N.nodes[1]
     longest_chain = node.find_longest_chain()
     for block_id, block in node.blockchain.items():
+        total_blocks += 1
+        if block.creator_id == 0:
+            total_adversary_blocks += 1
         if block_id in longest_chain:
             blocks_in_longest_chain += 1
             if block.creator_id == 0:
                 adversary_blocks_in_longest_chain += 1
 
-    node0 = simulator.N.nodes[0]
-    for block_id, block in node0.blockchain.items():
-        total_blocks+=1
-    total_adversary_blocks = len(node0.private_blockchain_tree)-1 # Excluding the Block 0
 
     print(f"Total blocks (released or not): {total_blocks }")
     print(f"Total adversary blocks (released or not): {total_adversary_blocks}")
