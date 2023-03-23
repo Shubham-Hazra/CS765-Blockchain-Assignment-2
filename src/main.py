@@ -3,6 +3,7 @@ import os
 import random
 import shutil
 
+from event import *
 from simulate import Simulator
 
 # Take command line arguments
@@ -29,6 +30,15 @@ simulation_type = args.type
 def main():
     simulator = Simulator(args.nodes,args.zeta,args.low_cpu,args.low_speed, args.Ttx, args.interarrival_block, args.time, simulation_type ,args.print, args.adversary_hashing)
     simulator.run()
+######################################################################################################################################################################
+    # To release the adversary's blocks after the simulation is over
+    adv_node = simulator.N.nodes[0]
+    for i in range(0,len(adv_node.private_blockchain)):
+        block = adv_node.private_blockchain.pop(0)
+        received_list = [False]*simulator.N.num_nodes 
+        received_list[0] = True
+        forward_block(simulator,block,adv_node,received_list)
+######################################################################################################################################################################
     folders = os.listdir()
     if args.visualize:
         print("Visualizing the blockchain tree...")
